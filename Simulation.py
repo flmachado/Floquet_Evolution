@@ -54,65 +54,65 @@ def Eigenvalues(Floquet):
     return np.sort(np.angle(-eig))
 
 
-    #print np.dot(Floquet, np.conj(Floquet).T) #Checks out
-    print "FLOQUET"
-    print Floquet
-    print ""
+    # #print np.dot(Floquet, np.conj(Floquet).T) #Checks out
+    # print "FLOQUET"
+    # print Floquet
+    # print ""
         
-    (w,v) =  np.linalg.eigh(Floquet + np.conj(Floquet).T )
-    (t1,temp) =  np.linalg.eig(Floquet)
-    print "Eigenvalues: ", t1
-    ## Eigenvectors satisfy dot(a, v[:, i]) = w[i] * v[:, i] which means that the COLUMNS are the eigenvectors, hence us transposing
-    v = v.T
+    # (w,v) =  np.linalg.eigh(Floquet + np.conj(Floquet).T )
+    # (t1,temp) =  np.linalg.eig(Floquet)
+    # print "Eigenvalues: ", t1
+    # ## Eigenvectors satisfy dot(a, v[:, i]) = w[i] * v[:, i] which means that the COLUMNS are the eigenvectors, hence us transposing
+    # v = v.T
 
-    w.sort()
-    t2 = np.real(t1)
-    t12.sort()
+    # w.sort()
+    # t2 = np.real(t1)
+    # t12.sort()
 
-    print "w_eigh ", w
-    print "w_eig ", 2*t2
-    print "dw ", w - 2*t2
+    # print "w_eigh ", w
+    # print "w_eig ", 2*t2
+    # print "dw ", w - 2*t2
     
-    if np.max(np.abs(np.sort(w) - np.sort(2*t2))) > 1e-2:
-        print "STOP NOT MATCHING"
-        print "STOP NOT MATCHING"
-        print "STOP NOT MATCHING"
-        print "STOP NOT MATCHING"
+    # if np.max(np.abs(np.sort(w) - np.sort(2*t2))) > 1e-2:
+    #     print "STOP NOT MATCHING"
+    #     print "STOP NOT MATCHING"
+    #     print "STOP NOT MATCHING"
+    #     print "STOP NOT MATCHING"
 
-    print ""
-    spect = []
-    for i in range(len(v)):
-        print "Norm of vector: ", np.dot(np.conj(v[i]).T, v[i])
-        k = np.dot( np.conj(v[i]).T , np.dot(Floquet, v[i])  )
-        print "Eigenvalue: ", k
-        print "Eigenvalue Norm: ", np.abs(k)
-        print ""
-        spect.append(k)
+    # print ""
+    # spect = []
+    # for i in range(len(v)):
+    #     print "Norm of vector: ", np.dot(np.conj(v[i]).T, v[i])
+    #     k = np.dot( np.conj(v[i]).T , np.dot(Floquet, v[i])  )
+    #     print "Eigenvalue: ", k
+    #     print "Eigenvalue Norm: ", np.abs(k)
+    #     print ""
+    #     spect.append(k)
         
             
-    spect = np.array(spect, dtype = 'complex')
+    # spect = np.array(spect, dtype = 'complex')
     
-    print spect
-    print t1
-    print "\n\n"
+    # print spect
+    # print t1
+    # print "\n\n"
     
-    tquasi = -np.angle(t1)
-    tquasi.sort()
-    tz = np.real( 1j* np.log(t1))
-    tz.sort()
-    print tz
-    quasi = -np.angle(spect)
-    quasi.sort()
+    # tquasi = -np.angle(t1)
+    # tquasi.sort()
+    # tz = np.real( 1j* np.log(t1))
+    # tz.sort()
+    # print tz
+    # quasi = -np.angle(spect)
+    # quasi.sort()
 
-    print "Q1: ", tquasi
-    print "Q2: ",quasi
-    print "dQ: ",tquasi - quasi
-    if max(np.abs(tquasi - quasi)) > 1e-7:
-        print "STOP", "Eigenvalues are not matching"
-        print "STOP", "Eigenvalues are not matching"
-        print "STOP", "Eigenvalues are not matching"
-        print "STOP", "Eigenvalues are not matching"
-        return 0
+    # print "Q1: ", tquasi
+    # print "Q2: ",quasi
+    # print "dQ: ",tquasi - quasi
+    # if max(np.abs(tquasi - quasi)) > 1e-7:
+    #     print "STOP", "Eigenvalues are not matching"
+    #     print "STOP", "Eigenvalues are not matching"
+    #     print "STOP", "Eigenvalues are not matching"
+    #     print "STOP", "Eigenvalues are not matching"
+    #     return 0
     
 def outer(A,B):
     sa = np.shape(A)
@@ -628,7 +628,7 @@ def Compute_r(L, T, W, epsilon, eta, neighbour = False):
 def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution='single',  logEvo = False, MAX_COUNTER = 4, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './'):
 
     (HPrethermal, Floquet, groundstate) = Floq( args )
-    
+    InfTemp = np.trace(HPrethermal)
     #print Floquet
 
     # (w,v) = np.linalg.eig(Floquet)
@@ -677,7 +677,9 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     Obs_0 = []
     Obs_t = []
     alpha = []
-    energy = []
+    energy_gs = []
+    energy_FM = []
+    energy_AM = []
     if res:
         print "Using Matrix Diagonalization"
     else:
@@ -687,25 +689,41 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     
     print "Looking at spins 3 and 6"
     
-    Obs_0 = [SigmaTerms(sigmaz, L, [2])]
-    Obs_0 = [SigmaTerms(sigmaz, L, [5])]
+    Obs_0.append( SigmaTerms(sigmaz, L, [2]) )
+    Obs_0.append( SigmaTerms(sigmaz, L, [5]) )
 
-    Obs_t = [Obs_0[0] ]
-    Obs_t = [Obs_0[1] ]
+    for i in Obs_0:
+        Obs_t.append( i )
 
     Obs_0.append(HPrethermal)
     Obs_t.append(HPrethermal)
 
-    values = []
+    values_gs = []
+    values_FM = []
+    values_AM = []
+
+    FM = groundstate*0
+    FM[2**L-1] = 1
+
+    AM = groundstate*0
+    index = 0
+    for i in range(0, L-1, 2):
+        index += 2**i
+    AM[i] = 1
+
     fft = []
     for i in range(len(Obs_0)-1):
         #print np.shape(Obs_0[i])
         #print Obs_0[i][state,state]
         
-        values.append( [ groundstate.dot(Obs_0[i]).dot(groundstate)[0,0] ] ) 
+        values_gs.append( [ groundstate.dot(Obs_0[i]).dot(Obs_0[i]).dot(groundstate)[0,0] ] ) 
+        values_FM.append( [ AM.dot(Obs_0[i]).dot(Obs_0[i]).dot(AM)[0,0] ] ) 
+        values_AM.append( [ FM.dot(Obs_0[i]).dot(Obs_0[i]).dot(FM)[0,0] ] ) 
         fft.append([1])
-
-    energy.append( groundstate.dot( HPrethermal ).dot(groundstate) ) # HPrethermal[state][state] )#
+    energy_gs.append(  groundstate.dot(HPrethermal).dot(groundstate) ) 
+    energy_FM.append(  AM.dot(HPrethermal).dot(AM) ) 
+    energy_AM.append(  FM.dot(HPrethermal).dot(FM) )
+    
     c = 0
     cc = 1
 
@@ -787,12 +805,16 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                     prod = np.conj(Floquet).T.dot(Obs_t[i]).dot(Floquet)
                     Obs_t[i] = prod
                     if i < len(Obs_0) - 1:
-                        values[i].append( (groundstate.dot( prod ).dot(groundstate))[0,0] )
+                        values_gs[i].append( (groundstate.dot( prod ).dot(Obs_0[i]).dot(groundstate) )[0,0] )
+                        values_AM[i].append( (AM.dot( prod ).dot(Obs_0[i]).dot(AM) )[0,0] )
+                        values_FM[i].append( (FM.dot( prod ).dot(Obs_0[i]).dot(FM) )[0,0] )
                     elif i == len(Obs_0) - 1:
-                        energy.append( (groundstate.dot( prod ).dot(groundstate))[0,0] )
+                        energy_gs.append( (groundstate.dot( prod ).dot(groundstate))[0,0] )
+                        energy_AM.append( (AM.dot( prod ).dot(AM))[0,0] )
+                        energy_FM.append( (FM.dot( prod ).dot(FM))[0,0] )
 
-                if i < len(Obs_0) - 2:
-                    fft[i].append( np.fft.fft(values[i]))
+                if i < len(Obs_0) - 1:
+                    fft[i].append( np.fft.fft(values_FM[i]))
         if logEvo:
             
             times.append( times[-1] + dt )
@@ -827,12 +849,17 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
 
         
     times = np.array(times[:])
-    values = np.array(values)
-    print energy
-    if np.max(np.abs( np.imag( energy) ) )> 1e-14:
+    values_gs = np.array(values_gs)
+    values_FM = np.array(values_FM)
+    values_AM = np.array(values_AM)
+
+    if  np.max(np.abs( np.imag( energy_AM) ) )> 1e-14 or np.max(np.abs( np.imag( energy_FM) ) )> 1e-14:
         print "TOO MUCH IMAGINARY PART"
-        print energy
-    energy = np.array(np.real(energy) )
+        print np.max(np.abs( np.imag( energy_AM) ) )
+        print np.max(np.abs( np.imag( energy_FM) ) )
+    energy_gs = np.array(np.real(energy_gs) )
+    energy_FM = np.array(np.real(energy_FM) )
+    energy_AM = np.array(np.real(energy_AM) )
 
     info = {'L': L,
             'args': args,
@@ -842,9 +869,17 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
             'fil': fil,
             'evolution': evolution,
             'logEvo': logEvo,
+            'InfTemp': InfTemp,
             'SVD_Cutoff': SVD_Cutoff}
             
-    output = {'values': values, 'times': times, 'energy': energy, 'info': info}
+    output = {'values_gs': values_gs,
+              'values_FM': values_FM,
+              'values_AM': values_AM,
+              'energy_gs': energy_gs,
+              'energy_FM': energy_FM,
+              'energy_AM': energy_AM,
+              'times': times, 'info': info,
+              'fft': fft}
     print ""
     print fil + ".npy"
     np.save(output_folder + fil, output)

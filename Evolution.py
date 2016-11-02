@@ -25,10 +25,15 @@ args = {'L': 8,
         '-o': './'}
 
 changed_state = False
+changed_Omega = False
 for i in range(1, len(sys.argv), 2):
     if sys.argv[i] in args.keys():
         if sys.argv[i] == 'state':
+            print "ASD"
             changed_state = True
+        if sys.argv[i] == 'Omega':
+            changed_Omega = True
+
         if sys.argv[i] == '-o':
             args[ sys.argv[i]] = sys.argv[i+1]
         else:
@@ -39,9 +44,13 @@ if not changed_state:
 print args
 
 L = int(args['L'])
-T = float(args['T'])
-J = float(args['J'])
 Omega = float(args['Omega'])
+if changed_Omega:
+    T = 2*np.pi/Omega
+else:
+    T = float(args['T'])
+
+J = float(args['J'])
 Jx = float(args['Jx'])
 hz = float(args['hz'])
 epsilon = float(args['epsilon'])
@@ -129,21 +138,9 @@ fil = fil + "Cutoff_%.8f"%SVD_Cutoff
 
 print "Filename: ",fil
 
-print "Averaging over repetitions"
-s = {'values': 0,
-     'times': 0,
-     'energy':0,
-     'info': 0}
 info = 0
 for i in range(Rep):
     print "\nRepetition: %d" % (i)
     output = Compute_Evolution(L, Floquet[Choice][0], Floquet[Choice][1], Nsteps, state, fil = 'R%d_'%(i) + fil, evolution = 'single',  logEvo = logEvo, MAX_COUNTER = args['MAX_COUNTER'], EIG_COUNTER = EIG_COUNTER, SVD_Cutoff = SVD_Cutoff, output_folder = args['-o'])
-    s['values'] += output['values']
-    s['energy'] += output['energy']
-    s['times'] = output['times']
-    s['info'] = output['info']
-    
-s['values'] = s['values']/Rep
-s['energy'] = s['energy']/Rep
-
+ 
 #np.save("Ave_R%d_"%(Rep) + fil, s)
