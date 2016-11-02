@@ -709,7 +709,9 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     index = 0
     for i in range(0, L-1, 2):
         index += 2**i
-    AM[i] = 1
+    AM[index] = 1
+
+   
 
     fft = []
     for i in range(len(Obs_0)-1):
