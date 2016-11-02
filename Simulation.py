@@ -720,6 +720,7 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
         values_FM.append( [ AM.dot(Obs_0[i]).dot(Obs_0[i]).dot(AM)[0,0] ] ) 
         values_AM.append( [ FM.dot(Obs_0[i]).dot(Obs_0[i]).dot(FM)[0,0] ] ) 
         fft.append([1])
+        
     energy_gs.append(  groundstate.dot(HPrethermal).dot(groundstate) ) 
     energy_FM.append(  AM.dot(HPrethermal).dot(AM) ) 
     energy_AM.append(  FM.dot(HPrethermal).dot(FM) )
@@ -738,15 +739,7 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
             #print i
             if logEvo:
                 if res == True:
-                    #prod =  np.diag(np.conj(Diag)).dot(alpha[i]).dot(np.diag(Diag)).dot(alpha[i])
-                    #v_diag = np.trace(prod)
-                    #values[i].append( v_diag)
-                    #print Obs_0[i]
                     prod = U.dot(np.diag(np.conj(Diag))).dot(alpha[i]).dot( np.diag(Diag) ).dot(Udag)  # state Spin (finite energy)
-                    #values[i].append(prod[2**L-1][2**L-1])
-                    #print prod
-                    #print "\n\n"
-                    #print i, len(Obs_0)
                     if i < len(Obs_0) - 1:
                         values[i].append( groundstate.dot( prod ).dot(groundstate) )
                     elif i == len(Obs_0) - 1:
@@ -756,11 +749,9 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                 
                 
                 else:
-                    mat =  np.conj(FloquetEvo).T.dot(Obs_t[i]).dot( FloquetEvo)
-                    Obs_t[i] = mat
-                    #mat = Obs_t[i].dot( Obs_0[i] )
-                    #if i == 0:
-                    #    print mat,"\n"
+                    prod =  np.conj(FloquetEvo).T.dot(Obs_t[i]).dot( FloquetEvo)
+                    Obs_t[i] = prod
+
                     if eigCounter == EIG_COUNTER:
                         print "Checking Numerics"
                         print times[-1]
@@ -776,27 +767,23 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                             (U, s, V) = np.linalg.svd( FloquetEvo )
                             FloquetEvo = U.dot(V)
                     else:
-                        #print "Not Checking Numerics"
                         eigCounter += 1
 
                         
-                        
-                    #v_floq = np.trace( mat.dot( Obs_0[i])) Thermal
-                    #v_floq = mat[2**L-1][2**L-1]  # Single State
-
-                    #v_floq = mat[state,state]  # Single State
-                    
+                   
                     if i < len(Obs_0) - 1:
-                        values[i].append( v_floq)
+                        values_gs[i].append( (groundstate.dot( prod ).dot(Obs_0[i]).dot(groundstate) )[0,0] )
+                        values_AM[i].append( (AM.dot( prod ).dot(Obs_0[i]).dot(AM) )[0,0] )
+                        values_FM[i].append( (FM.dot( prod ).dot(Obs_0[i]).dot(FM) )[0,0] )
+
                     elif i == len(Obs_0) - 1:
-                        energy.append( groundstate.dot( mat ).dot(groundstate) )
-                        #energy.append( v_floq[state][state])
+                        energy_gs.append( (groundstate.dot( prod ).dot(groundstate))[0,0] )
+                        energy_AM.append( (AM.dot( prod ).dot(AM))[0,0] )
+                        energy_FM.append( (FM.dot( prod ).dot(FM))[0,0] )
+
                         
             else:
                 if res:
-                    #prod = np.diag( np.conj(Diag)).dot(alpha[i]).dot(np.diag(Diag)).dot(alpha[i])  #Thermal
-                    #values[i].append(np.trace( prod) )
-
                     prod = U.dot(np.diag(np.conj(Diag))).dot(alpha[i]).dot( np.diag(Diag) ).Udag  # state Spin (finite energy)
                     values[i].append(prod[state,state])
 
@@ -816,7 +803,10 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                 if i < len(Obs_0) - 1:
                     fft[i].append( np.fft.fft(values_FM[i]))
         if logEvo:
-            
+            #print ""
+            #print "dt: ",dt
+            #print times[-1]
+            #print counter
             times.append( times[-1] + dt )
             if res:
                 if counter < MAX_COUNTER:
