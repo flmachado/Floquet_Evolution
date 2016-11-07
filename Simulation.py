@@ -629,13 +629,20 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
 
     (HPrethermal, Floquet, groundstate) = Floq( args )
     InfTemp = np.trace(HPrethermal)
+
+    print "Computing HPrethermal Eigenvalues"
+    eigHprethermal = np.linalg.eigvalsh( HPrethermal )
+
+    print "Computing Floquet Eigenvalues"
+    eigFloquet = np.linalg.eigvals( Floquet )
+    print "DONE"
     #print Floquet
 
-    # (w,v) = np.linalg.eig(Floquet)
+    (w,v) = np.linalg.eig(Floquet)
 
-    # U = v
-    # Udag = np.conj(v).T
-    # Diag = w
+    U = v
+    Udag = np.conj(v).T
+    Diag = w
 
     # angles = np.angle(w)
     # print angles
@@ -649,21 +656,14 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     # return 0
 
     
-    # res = True
-    # test = np.allclose( Udag.dot(U) ,  np.eye(2**L))
-    # res = res and test
-    # print "Unitary: ", test
-    # test = np.allclose(U.dot(np.diag(w)).dot(Udag) , Floquet)
-    # res = res and test
-    # print "Decomp: ", test
-    # test = np.allclose(U.dot( np.diag(w**2)).dot(Udag) , Floquet.dot(Floquet))
-    # res = res and test
-    # print "Decomp2: ", test
-    # test = np.allclose(U.dot( np.diag(w**3)).dot(Udag) , Floquet.dot(Floquet).dot(Floquet))
-    # res = res and test
-    # print "Decomp3: ", test
-
-    res = False
+    res = True
+    test = np.allclose( Udag.dot(U) ,  np.eye(2**L))
+    res = res and test
+    print "Unitary: ", test
+    test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
+    res = res and test
+    
+    #res = False
 
     #print "Floquet"
     #print Floquet
@@ -680,17 +680,18 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     energy_gs = []
     energy_FM = []
     energy_AM = []
+
+
+
     if res:
         print "Using Matrix Diagonalization"
     else:
         print "Using power of matrix"
+       
+    print "Looking at spins 6"
     
-
-    
-    print "Looking at spins 3 and 6"
-    
-    Obs_0.append( SigmaTerms(sigmaz, L, [2]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [5]) )
+    Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
+    Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
 
     for i in Obs_0:
         Obs_t.append( i )
@@ -698,58 +699,129 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     Obs_0.append(HPrethermal)
     Obs_t.append(HPrethermal)
 
-    values_gs = []
-    values_FM = []
-    values_AM = []
-
-    FM = groundstate*0
+    states = [groundstate] # ground state and Ferro
+    FM = groundstate * 0
     FM[2**L-1] = 1
+    
+    states.append(FM)
 
-    AM = groundstate*0
     index = 0
     for i in range(0, L-1, 2):
+        temp = groundstate * 0 
         index += 2**i
-    AM[index] = 1
+        temp[index] = 1
+        states.append(temp)
+        #print index
 
-   
+    #print len( states )
+    #print states
+    values = []
+    energies = []
 
-    fft = []
-    for i in range(len(Obs_0)-1):
-        #print np.shape(Obs_0[i])
-        #print Obs_0[i][state,state]
+
+    #for state in states:
+    #    print np.shape(state)
+  
+    if res:
+        stateleft = []
+        stateright = []
         
-        values_gs.append( [ groundstate.dot(Obs_0[i]).dot(Obs_0[i]).dot(groundstate)[0,0] ] ) 
-        values_FM.append( [ AM.dot(Obs_0[i]).dot(Obs_0[i]).dot(AM)[0,0] ] ) 
-        values_AM.append( [ FM.dot(Obs_0[i]).dot(Obs_0[i]).dot(FM)[0,0] ] ) 
-        fft.append([1])
+        for state in states:
+            stateleft.append( np.conj(Udag.dot(state)))
+            temp = []
+            for i in range(len(Obs_0)):
+                temp.append( Udag.dot(Obs_0[i]).dot(state).T )
+            stateright.append(temp)
+
+            #print (np.conj(state).dot(U).dot(Udag).dot(Obs_0[i]).dot(state) )
+            #print np.conj(state).dot(Obs_0[i]).dot(state)
+
+
+        for i in range(len(Obs_0)):
+            alpha.append( Udag.dot( Obs_0[i] ).dot(U) )
+
+        for i in range(len(Obs_0)-1):
+            obs0 = []
+            for k in range(len(states)):
+                #print np.shape(alpha[i])
+                #print np.shape(stateleft[k])
+                #print np.shape(stateright[k])
+                obs0.append( (np.conj(stateleft[k]).dot(alpha[i]).dot( stateright[k] ) )[0,0] )
+
+                #print i, k , (np.conj(stateleft[k]).dot( stateright[k] ) )[0,0]
+
+            values.append([obs0])
         
-    energy_gs.append(  groundstate.dot(HPrethermal).dot(groundstate) ) 
-    energy_FM.append(  AM.dot(HPrethermal).dot(AM) ) 
-    energy_AM.append(  FM.dot(HPrethermal).dot(FM) )
+        en0 = []
+        for k in range(len(states)):
+            en0.append( (np.conj(stateleft[k]).dot(alpha[-1]).dot( np.conj(stateleft[k].T) ))[0,0] )
+        energies.append(en0)
+
+    else:
+        for i in range(len(Obs_0)-1):
+            #print np.shape(Obs_0[i])
+            #print Obs_0[i][state,state]
+            obs0 = []
+            for state in states:
+                obs0.append( (state.dot(Obs_0[i]).dot(Obs_0[i]).dot(state))[0,0] )
+            values.append([obs0])
     
+        en0 = []
+        for state in states:
+            en0.append( (state.dot(HPrethermal).dot(state)))
+        energies.append(en0)
+        FloquetEvo = Floquet
+
     c = 0
     cc = 1
 
-    FloquetEvo = Floquet
     times = [0]
     counter = 0
     eigCounter = 0
     dt = 1
+
+    def compute_Expectations(prod, i ):
+        if res:
+            if i < len(Obs_0) - 1:
+                prod = prod.dot(Obs_0[i]) 
+                obst = []
+                for k in range(len( states)):
+                    obst.append( (stateleft[k].dot( prod ).dot(stateright[k][i]) )[0,0] )
+
+                    print (stateleft[k].dot( prod ).dot(stateright[k][i])  )[0,0], states[k].dot( np.linalg.matrix_power(np.conj(Floquet).T, times[-1]+dt)).dot(Obs_0[i]).dot( np.linalg.matrix_power( Floquet, times[-1]+dt) ).dot(states[k])
+                values[i].append(obst)
+
+            elif i == len(Obs_0) - 1:
+                ent = []
+                for k in range(len(states)):
+                    ent.append( (stateleft[k].dot( prod ).dot(np.conj( stateleft[k].T) ))[0,0] )
+                energies.append(ent)
+
+        else:
+            if i < len(Obs_0) - 1:
+                obst = []
+                prod = prod.dot(Obs_0[i]) 
+                for state in states:
+                    obst.append( (np.conj(state).dot( prod ).dot(state) )[0,0] )
+                values[i].append(obst)
+            elif i == len(Obs_0) - 1:
+                ent = []
+                for state in states:
+                    ent.append( (np.conj(state).dot( prod ).dot(state))[0,0] )
+                energies.append(ent)
+
+
     while times[-1] < Nsteps:
+        #print times[-1]
         # Evolve the different observables:
         for i in range(len(Obs_0)):
-            #print i
+
             if logEvo:
                 if res == True:
-                    prod = U.dot(np.diag(np.conj(Diag))).dot(alpha[i]).dot( np.diag(Diag) ).dot(Udag)  # state Spin (finite energy)
-                    if i < len(Obs_0) - 1:
-                        values[i].append( groundstate.dot( prod ).dot(groundstate) )
-                    elif i == len(Obs_0) - 1:
-                        energy.append(  groundstate.dot( prod ).dot(groundstate) )
-                        #energy.append( prod[state,state])
-                        
-                
-                
+                    prod = np.diag( np.conj(Diag) ).dot(alpha[i]).dot(np.diag( Diag) )
+                    #U.dot(np.diag(np.conj(Diag))).dot(alpha[i]).dot( np.diag(Diag) ).dot(Udag) 
+                    compute_Expectations(prod, i)
+                                
                 else:
                     prod =  np.conj(FloquetEvo).T.dot(Obs_t[i]).dot( FloquetEvo)
                     Obs_t[i] = prod
@@ -771,60 +843,51 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                     else:
                         eigCounter += 1
 
+                    compute_Expectations(prod, i)
                         
-                   
-                    if i < len(Obs_0) - 1:
-                        values_gs[i].append( (groundstate.dot( prod ).dot(Obs_0[i]).dot(groundstate) )[0,0] )
-                        values_AM[i].append( (AM.dot( prod ).dot(Obs_0[i]).dot(AM) )[0,0] )
-                        values_FM[i].append( (FM.dot( prod ).dot(Obs_0[i]).dot(FM) )[0,0] )
-
-                    elif i == len(Obs_0) - 1:
-                        energy_gs.append( (groundstate.dot( prod ).dot(groundstate))[0,0] )
-                        energy_AM.append( (AM.dot( prod ).dot(AM))[0,0] )
-                        energy_FM.append( (FM.dot( prod ).dot(FM))[0,0] )
-
+                    # if i < len(Obs_0) - 1:
+                    #     for state in states:
+                    #         obst.append( (state.dot( prod ).dot(Obs_0[i]).dot(state) )[0,0] )
+                    #     values[i].append(obst)
+                    # elif i == len(Obs_0) - 1:
+                    #     for state in states:
+                    #         ent.append( (state.dot( prod ).dot(state))[0,0] )
+                    #     energies.append([ent])
                         
             else:
                 if res:
-                    prod = U.dot(np.diag(np.conj(Diag))).dot(alpha[i]).dot( np.diag(Diag) ).Udag  # state Spin (finite energy)
-                    values[i].append(prod[state,state])
-
-            
+                    prod = np.diag(np.conj(Diag) ).dot(alpha[i]).dot( np.diag(Diag) )
+                    compute_Expectations(prod, i)
+           
                 else:
                     prod = np.conj(Floquet).T.dot(Obs_t[i]).dot(Floquet)
                     Obs_t[i] = prod
-                    if i < len(Obs_0) - 1:
-                        values_gs[i].append( (groundstate.dot( prod ).dot(Obs_0[i]).dot(groundstate) )[0,0] )
-                        values_AM[i].append( (AM.dot( prod ).dot(Obs_0[i]).dot(AM) )[0,0] )
-                        values_FM[i].append( (FM.dot( prod ).dot(Obs_0[i]).dot(FM) )[0,0] )
-                    elif i == len(Obs_0) - 1:
-                        energy_gs.append( (groundstate.dot( prod ).dot(groundstate))[0,0] )
-                        energy_AM.append( (AM.dot( prod ).dot(AM))[0,0] )
-                        energy_FM.append( (FM.dot( prod ).dot(FM))[0,0] )
+                    compute_Expectations(prod, i)
+                    #values[i].append(prod[state,state])
 
-                if i < len(Obs_0) - 1:
-                    fft[i].append( np.fft.fft(values_FM[i]))
+#                if i < len(Obs_0) - 1:
+#                    fft[i].append( np.fft.fft(values_FM[i]))
         if logEvo:
             #print ""
             #print "dt: ",dt
             #print times[-1]
             #print counter
+
             times.append( times[-1] + dt )
-            if res:
-                if counter < MAX_COUNTER:
-                    counter += 1
-                else:
-                    Diag = Diag * Diag
-                    Diag = Diag / np.abs(Diag)
-                    dt *=2
-                    counter = 0 
+            if counter < MAX_COUNTER:
+                counter += 1
             else:
-                if counter < MAX_COUNTER:
-                    counter += 1
+                counter = 0 
+                dt *= 2
+                if res:
+                    w= w * w
+                    w = w / np.abs(w)
                 else:
                     FloquetEvo = FloquetEvo.dot(FloquetEvo)
-                    dt *=2
-                    counter = 0
+
+            if res:
+                Diag = Diag * w
+                Diag = Diag/np.abs(Diag)
                     
         else:
             times.append(times[-1] + 1)
@@ -832,46 +895,36 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                 Diag = Diag * w
                 Diag = Diag/np.abs(Diag)
 
-
-                
-    #for ob in Obs_t:
-    #    print ""
-    #    print ""
-    #    print ob
-
         
     times = np.array(times[:])
-    values_gs = np.array(values_gs)
-    values_FM = np.array(values_FM)
-    values_AM = np.array(values_AM)
 
-    if  np.max(np.abs( np.imag( energy_AM) ) )> 1e-14 or np.max(np.abs( np.imag( energy_FM) ) )> 1e-14:
+    for i in range(len(Obs_0)-1):
+        #print values[i]
+        values[i] = np.array(values[i])
+
+    energies = np.array(energies)
+    if  np.max(np.abs( np.imag( energies) ) )> 1e-14:
         print "TOO MUCH IMAGINARY PART"
-        print np.max(np.abs( np.imag( energy_AM) ) )
-        print np.max(np.abs( np.imag( energy_FM) ) )
-    energy_gs = np.array(np.real(energy_gs) )
-    energy_FM = np.array(np.real(energy_FM) )
-    energy_AM = np.array(np.real(energy_AM) )
+        print np.max(np.abs( np.imag( energies) ) )
 
     info = {'L': L,
             'args': args,
             'Floquet': Floq.__name__,
-            'state': state,
+            'states': states,
             'Nsteps': Nsteps,
             'fil': fil,
             'evolution': evolution,
             'logEvo': logEvo,
             'InfTemp': InfTemp,
-            'SVD_Cutoff': SVD_Cutoff}
+            'SVD_Cutoff': SVD_Cutoff,
+            'EigHPrethermal': eigHprethermal,
+            'EigFloquet': eigFloquet}
             
-    output = {'values_gs': values_gs,
-              'values_FM': values_FM,
-              'values_AM': values_AM,
-              'energy_gs': energy_gs,
-              'energy_FM': energy_FM,
-              'energy_AM': energy_AM,
+    output = {'values': values,
+              'energies': energies,
               'times': times, 'info': info,
-              'fft': fft}
+              #'fft': fft
+              }
     print ""
     print fil + ".npy"
     np.save(output_folder + fil, output)

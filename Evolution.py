@@ -132,7 +132,7 @@ Floquet= {'GCP':  [Generate_Chetans_Prethermal,
           }
 Choice = 'GLRF'
 
-fil = Floquet[Choice][2] + ('_Log%d_Nsteps%d_State%d'%( logEvo, Nsteps, state))
+fil = Floquet[Choice][2] + ('_Log%d_Nsteps%d_MAX_COUNTER%d_12'%( logEvo, Nsteps, args['MAX_COUNTER'] ) )
 
 fil = fil + "Cutoff_%.8f"%SVD_Cutoff
 
