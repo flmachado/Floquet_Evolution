@@ -16,37 +16,37 @@ iden   = np.array([[1,0],
 
 def Ewald( L,x, alpha):
     return ( 1.0/ (np.sin( np.pi * x/L) / (np.pi / L))**alpha)
- 
 
 def EigenValueError(mat, err):
 
-    #print "\n Error "
-    
     CO = np.linalg.eigvalsh( (mat + np.conj( mat ).T)/2)
     SI = np.linalg.eigvalsh( (mat - np.conj( mat ).T)/2j ) 
 
-    #print CO
-    #print SI
-
-    #print ""
-    
     l = np.array( np.sort( CO**2 ) )
     k = np.array( np.sort( SI**2 ) )
-
-    #print l
-    #print k
     
     ab = l + k[::-1]
-
-    #print ab
-
-    #print ""
     
     if min(ab) < 1 - err:
         return True
     else:
         return False
 
+def EigenVectorsUnitary(mat):
+
+    (w_real, v) = np.linalg.eigh( (mat + np.conj(mat).T)/2)
+    w = []
+    print np.shape(v)
+    print np.shape(mat)
+    
+    Eig = np.conj(v.T).dot( mat ).dot( v )   
+    #print Eig
+    #print Eig
+    #print Eig.shape
+    #print np.max(np.abs( Eig - np.diag(np.diag(Eig)) ) )
+    #print w
+    #print np.linalg.eigvals(mat)
+    return (np.diag(Eig), v)
 
 def Eigenvalues(Floquet):
 
@@ -190,7 +190,9 @@ def Generate_Floquet_Operator(L,T,W,epsilon,eta):
         Uf2 = outer(SingleSpin, Uf2)
     
     ##########
-    (w,v) = np.linalg.eig(np.dot(Uf2, Uf1))
+    Floquet = np.dot(Uf2, Uf1)
+    (w_t, v_t) = EigenVectorsUnitary( Floquet )
+    (w,v) = np.linalg.eig( Floquet )
 
     res = True
     test = np.allclose( np.conj(v).T.dot(v) ,  np.eye(2**L))
@@ -392,6 +394,7 @@ def Generate_Long_Range_Floquet( args):
     ########## First Half of evolution
     # Precession term:
 
+    print "Generate ZPrecession"
     Zprecession = np.zeros( (2**L, 2**L), dtype = 'complex')
     for i in range(L):
         Zprecession += SigmaTerms(sigmaz, L, [i])
@@ -399,15 +402,17 @@ def Generate_Long_Range_Floquet( args):
     #print "Zprecession"
     #print np.diag(Zprecession)
 
+    print "Generate XPrecession"
     Xprecession = np.zeros( (2**L, 2**L), dtype = 'complex')
     for i in range(L):
         Xprecession += SigmaTerms(sigmax, L, [i])
-        
+
+    print "Generate YPrecession"
     Yprecession = np.zeros( (2**L, 2**L), dtype = 'complex')
     for i in range(L):
         Yprecession += SigmaTerms(sigmay, L, [i])
 
-    
+    print "Generate XXPrecession"
     XXprec = np.zeros((2**L, 2**L), dtype = 'complex')
     # NO CYCLIC CONDITION
     for i in range(L-1):
@@ -422,6 +427,7 @@ def Generate_Long_Range_Floquet( args):
     #     interactions += SigmaTerms(sigmaz, L, [i,j]) * J 
 
     # CONSIDER LONG RANGE INTERACTION - No Cyclic conditions
+    print "Generate Interactions"
     interactions = np.zeros((2**L, 2**L), dtype = 'complex')
     for i in range(L-1):
         for j in range(i+1, L):
@@ -439,10 +445,12 @@ def Generate_Long_Range_Floquet( args):
         
     H1 = interactions + hz*Zprecession + hx*Xprecession + hy*Yprecession + Jx * XXprec
     #print H1
+    print "Compute Uf1"
     Uf1 = slinalg.expm2(- 1j*T* H1)
     
     HPrethermal = (interactions + hx*Xprecession + Jx * XXprec)/L
 
+    
     (w,v) = np.linalg.eigh(HPrethermal)
     groundstate = np.argmin(w)
     groundstate = v[:,groundstate]
@@ -451,7 +459,7 @@ def Generate_Long_Range_Floquet( args):
     #     groundstate[i] == 0
     # groundstate[2**L-1] = 1
     
-    return (HPrethermal, Uf2.dot(Uf1), groundstate) #HPrethermal acts over time T, H2, acts over a Delta term
+    return (HPrethermal, w, Uf2.dot(Uf1), groundstate) #HPrethermal acts over time T, H2, acts over a Delta term
 
 
 def Generate_Francisco( args):
@@ -627,22 +635,28 @@ def Compute_r(L, T, W, epsilon, eta, neighbour = False):
 
 def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution='single',  logEvo = False, MAX_COUNTER = 4, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './'):
 
-    (HPrethermal, Floquet, groundstate) = Floq( args )
+    (HPrethermal, eigHprethermal, Floquet, groundstate) = Floq( args )
     InfTemp = np.trace(HPrethermal)
 
-    print "Computing HPrethermal Eigenvalues"
-    eigHprethermal = np.linalg.eigvalsh( HPrethermal )
+    #print "Computing HPrethermal Eigenvalues"
+    #eigHprethermal = np.linalg.eigvalsh( HPrethermal )
 
+    #(w_t,v_t) = np.linalg.eig(Floquet)
     print "Computing Floquet Eigenvalues"
-    eigFloquet = np.linalg.eigvals( Floquet )
-    print "DONE"
-    #print Floquet
+    (w, v) = EigenVectorsUnitary( Floquet )
+    eigFloquet = w
+    # print np.abs(w)
+    # print np.abs(w_t)
+    # print 
 
-    (w,v) = np.linalg.eig(Floquet)
-
+    # print max( np.abs(np.sort( np.real(w)) - np.sort( np.real(w_t)) ))
+    # print 
+    # print max( np.abs(np.sort( np.imag(w)) -np.sort( np.imag(w_t))) )
+    
+    
     U = v
     Udag = np.conj(v).T
-    Diag = w
+    Diag = np.array(w)
 
     # angles = np.angle(w)
     # print angles
@@ -657,12 +671,15 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
 
     
     res = True
-    test = np.allclose( Udag.dot(U) ,  np.eye(2**L))
-    res = res and test
-    print "Unitary: ", test
+    test1 = np.allclose( Udag.dot(U) ,  np.eye(2**L))
+    test2 = np.allclose( U.dot(Udag) ,  np.eye(2**L))
+    #print np.diag(Udag.dot(U))
+    #print np.diag(U.dot(Udag))
+    res = res and test1 and test2
+    #print "Unitary: ", test1 and test2
     test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
     res = res and test
-    
+
     #res = False
 
     #print "Floquet"
@@ -682,13 +699,12 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     energy_AM = []
 
 
-
     if res:
         print "Using Matrix Diagonalization"
     else:
         print "Using power of matrix"
        
-    print "Looking at spins 6"
+    print "Looking at groundstate, FM and different number of domains"
     
     Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
     Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
@@ -746,15 +762,22 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                 #print np.shape(alpha[i])
                 #print np.shape(stateleft[k])
                 #print np.shape(stateright[k])
-                obs0.append( (np.conj(stateleft[k]).dot(alpha[i]).dot( stateright[k] ) )[0,0] )
-
+                obs0.append( (stateleft[k].dot(alpha[i]).dot( stateright[k][i] ) )[0,0] )
+                
+                #print obs0[-1]
+                #print states[k].dot(Obs_0[i]).dot(Obs_0[i]).dot(states[k])
+                #print np.diag(Udag.dot(U))
+                #print np.diag(U.dot(Udag))
+                #print np.diag(Obs_0[i].dot(Obs_0[i]) )
+                #print states[k].dot(U).dot(Obs_0[i]).dot(Obs_0[i]).dot(Udag).dot(states[k])
+                #print "\n"
                 #print i, k , (np.conj(stateleft[k]).dot( stateright[k] ) )[0,0]
 
             values.append([obs0])
         
         en0 = []
         for k in range(len(states)):
-            en0.append( (np.conj(stateleft[k]).dot(alpha[-1]).dot( np.conj(stateleft[k].T) ))[0,0] )
+            en0.append( (stateleft[k].dot(alpha[-1]).dot( np.conj(stateleft[k].T)) )[0,0] )
         energies.append(en0)
 
     else:
@@ -783,18 +806,38 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     def compute_Expectations(prod, i ):
         if res:
             if i < len(Obs_0) - 1:
-                prod = prod.dot(Obs_0[i]) 
+                #prod = prod.dot(Obs_0[i]) 
                 obst = []
                 for k in range(len( states)):
-                    obst.append( (stateleft[k].dot( prod ).dot(stateright[k][i]) )[0,0] )
 
-                    print (stateleft[k].dot( prod ).dot(stateright[k][i])  )[0,0], states[k].dot( np.linalg.matrix_power(np.conj(Floquet).T, times[-1]+dt)).dot(Obs_0[i]).dot( np.linalg.matrix_power( Floquet, times[-1]+dt) ).dot(states[k])
+                    # print np.multiply(stateleft[k] ,np.conj(Diag)).shape
+                    # print stateleft[k].dot(np.diag(np.conj(Diag)) ).shape
+                    # print max( np.abs(np.multiply(stateleft[k] ,np.conj(Diag)) - stateleft[k].dot(np.diag(np.conj(Diag)) ) ))
+                    # print ""
+                    # print np.shape(Diag)
+                    # print stateright[k][i].T.shape, stateright[k][i].shape
+                    # print (stateright[k][i]*Diag).shape
+                    # print np.multiply(Diag , stateright[k][i]).shape
+                    # print np.multiply( stateright[k][i].T, Diag).T.shape
+                    # print np.diag(Diag).dot(stateright[k][i]).shape
+                    # print max( np.abs(np.multiply(Diag , stateright[k][i])- np.diag(Diag).dot(stateright[k][i])) )
+                    # print ""
+                    # print ""
+                    obst.append( (
+                        np.multiply(stateleft[k] ,np.conj(Diag)).dot( prod ).dot(
+                            np.multiply( stateright[k][i].T, Diag).T)
+                    )[0,0] )
+
+                    #print (stateleft[k].dot( prod ).dot(stateright[k][i])  )[0,0], states[k].dot( np.linalg.matrix_power(np.conj(Floquet).T, times[-1]+dt)).dot(Obs_0[i]).dot( np.linalg.matrix_power( Floquet, times[-1]+dt) ).dot(states[k])[0,0]
                 values[i].append(obst)
 
             elif i == len(Obs_0) - 1:
                 ent = []
                 for k in range(len(states)):
-                    ent.append( (stateleft[k].dot( prod ).dot(np.conj( stateleft[k].T) ))[0,0] )
+                    ent.append( (
+                        np.multiply(stateleft[k] , np.conj(Diag)).dot( prod ).dot(
+                            np.multiply( np.conj(stateleft[k]), Diag).T)
+                    )[0,0] )
                 energies.append(ent)
 
         else:
@@ -818,9 +861,11 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
 
             if logEvo:
                 if res == True:
-                    prod = np.diag( np.conj(Diag) ).dot(alpha[i]).dot(np.diag( Diag) )
+                    #prod = np.diag( np.conj(Diag) ).dot(alpha[i]).dot(np.diag( Diag) )
                     #U.dot(np.diag(np.conj(Diag))).dot(alpha[i]).dot( np.diag(Diag) ).dot(Udag) 
-                    compute_Expectations(prod, i)
+                    #compute_Expectations(prod, i)
+                    compute_Expectations(alpha[i], i)
+                    
                                 
                 else:
                     prod =  np.conj(FloquetEvo).T.dot(Obs_t[i]).dot( FloquetEvo)
@@ -856,8 +901,9 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
                         
             else:
                 if res:
-                    prod = np.diag(np.conj(Diag) ).dot(alpha[i]).dot( np.diag(Diag) )
-                    compute_Expectations(prod, i)
+                    #prod = np.diag(np.conj(Diag) ).dot(alpha[i]).dot( np.diag(Diag) )
+                    #compute_Expectations(prod, i)
+                    compute_Expectations(alpha[i], i)
            
                 else:
                     prod = np.conj(Floquet).T.dot(Obs_t[i]).dot(Floquet)
@@ -905,6 +951,7 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     energies = np.array(energies)
     if  np.max(np.abs( np.imag( energies) ) )> 1e-14:
         print "TOO MUCH IMAGINARY PART"
+        print energies
         print np.max(np.abs( np.imag( energies) ) )
 
     info = {'L': L,
