@@ -453,13 +453,29 @@ def Generate_Long_Range_Floquet( args):
     
     (w,v) = np.linalg.eigh(HPrethermal)
     groundstate = np.argmin(w)
-    groundstate = v[:,groundstate]
+    print "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w)
+    states = []
+    states.append(v[:,groundstate])
 
+    rang = np.max(w) - np.min(w)
+    delta = 0.1
+
+    for i in range(1,6):
+        #print i
+        for o in range(2**L):
+            if abs(w[o]- np.min(w) - rang * float(i)/6.0) < delta:
+                states.append(v[:, o] )
+                break
+            
+    #print len(states)
+    
+    
+    
     # for i in range(2**L-1):
     #     groundstate[i] == 0
     # groundstate[2**L-1] = 1
     
-    return (HPrethermal, w, Uf2.dot(Uf1), groundstate) #HPrethermal acts over time T, H2, acts over a Delta term
+    return (HPrethermal, w, Uf2.dot(Uf1), states) #HPrethermal acts over time T, H2, acts over a Delta term
 
 
 def Generate_Francisco( args):
@@ -635,7 +651,7 @@ def Compute_r(L, T, W, epsilon, eta, neighbour = False):
 
 def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution='single',  logEvo = False, MAX_COUNTER = 4, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './'):
 
-    (HPrethermal, eigHprethermal, Floquet, groundstate) = Floq( args )
+    (HPrethermal, eigHprethermal, Floquet, states) = Floq( args )
     InfTemp = np.trace(HPrethermal)
 
     #print "Computing HPrethermal Eigenvalues"
@@ -669,13 +685,14 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     # plt.show()
     # return 0
 
-    
+
+    print "Testing Decomposition"
     res = True
     test1 = np.allclose( Udag.dot(U) ,  np.eye(2**L))
-    test2 = np.allclose( U.dot(Udag) ,  np.eye(2**L))
+    #test2 = np.allclose( U.dot(Udag) ,  np.eye(2**L))
     #print np.diag(Udag.dot(U))
     #print np.diag(U.dot(Udag))
-    res = res and test1 and test2
+    res = res and test1 
     #print "Unitary: ", test1 and test2
     test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
     res = res and test
@@ -694,17 +711,13 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     Obs_0 = []
     Obs_t = []
     alpha = []
-    energy_gs = []
-    energy_FM = []
-    energy_AM = []
-
 
     if res:
         print "Using Matrix Diagonalization"
     else:
         print "Using power of matrix"
        
-    print "Looking at groundstate, FM and different number of domains"
+    print "Looking at groundstate, eigenstates of HPrethermal, FM and different number of domains"
     
     Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
     Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
@@ -715,22 +728,27 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
     Obs_0.append(HPrethermal)
     Obs_t.append(HPrethermal)
 
-    states = [groundstate] # ground state and Ferro
-    FM = groundstate * 0
-    FM[2**L-1] = 1
-    
+    FM = states[0] * 0
+    FM[2**L-1] = 1    
     states.append(FM)
 
-    index = 0
-    for i in range(0, L-1, 2):
-        temp = groundstate * 0 
-        index += 2**i
+    for dom in range(1,5):
+        size = L/dom
+        counter = 1
+        l = 1
+        index = 0
+        for i in range(0, L):
+            index += l*2**i
+            if counter < size:
+                l = 1 - l
+                counter += 1
+            else:
+                counter = 1
+            
+        temp = states[0] * 0
         temp[index] = 1
         states.append(temp)
-        #print index
 
-    #print len( states )
-    #print states
     values = []
     energies = []
 
