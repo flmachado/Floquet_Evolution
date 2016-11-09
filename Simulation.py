@@ -53,66 +53,6 @@ def Eigenvalues(Floquet):
     eig = np.linalg.eig(Floquet)[0]
     return np.sort(np.angle(-eig))
 
-
-    # #print np.dot(Floquet, np.conj(Floquet).T) #Checks out
-    # print "FLOQUET"
-    # print Floquet
-    # print ""
-        
-    # (w,v) =  np.linalg.eigh(Floquet + np.conj(Floquet).T )
-    # (t1,temp) =  np.linalg.eig(Floquet)
-    # print "Eigenvalues: ", t1
-    # ## Eigenvectors satisfy dot(a, v[:, i]) = w[i] * v[:, i] which means that the COLUMNS are the eigenvectors, hence us transposing
-    # v = v.T
-
-    # w.sort()
-    # t2 = np.real(t1)
-    # t12.sort()
-
-    # print "w_eigh ", w
-    # print "w_eig ", 2*t2
-    # print "dw ", w - 2*t2
-    
-    # if np.max(np.abs(np.sort(w) - np.sort(2*t2))) > 1e-2:
-    #     print "STOP NOT MATCHING"
-    #     print "STOP NOT MATCHING"
-    #     print "STOP NOT MATCHING"
-    #     print "STOP NOT MATCHING"
-
-    # print ""
-    # spect = []
-    # for i in range(len(v)):
-    #     print "Norm of vector: ", np.dot(np.conj(v[i]).T, v[i])
-    #     k = np.dot( np.conj(v[i]).T , np.dot(Floquet, v[i])  )
-    #     print "Eigenvalue: ", k
-    #     print "Eigenvalue Norm: ", np.abs(k)
-    #     print ""
-    #     spect.append(k)
-        
-            
-    # spect = np.array(spect, dtype = 'complex')
-    
-    # print spect
-    # print t1
-    # print "\n\n"
-    
-    # tquasi = -np.angle(t1)
-    # tquasi.sort()
-    # tz = np.real( 1j* np.log(t1))
-    # tz.sort()
-    # print tz
-    # quasi = -np.angle(spect)
-    # quasi.sort()
-
-    # print "Q1: ", tquasi
-    # print "Q2: ",quasi
-    # print "dQ: ",tquasi - quasi
-    # if max(np.abs(tquasi - quasi)) > 1e-7:
-    #     print "STOP", "Eigenvalues are not matching"
-    #     print "STOP", "Eigenvalues are not matching"
-    #     print "STOP", "Eigenvalues are not matching"
-    #     print "STOP", "Eigenvalues are not matching"
-    #     return 0
     
 def outer(A,B):
     sa = np.shape(A)
@@ -297,8 +237,6 @@ def Generate_Floquet_NearestNeighbour(args):
     return (HPrethermal, Uf2.dot(Uf1))
     
 
-
-
 def Generate_Chetans_Prethermal(L,T2,J,epsilon,hz, hy, hx):
     print "\nUSING CHETAN's FUNCTION\n"
     # Hamniltonia
@@ -377,6 +315,7 @@ def Generate_Chetans_Prethermal(L,T2,J,epsilon,hz, hy, hx):
     
     return (v, w, np.conj(v).T, np.dot(Uf2, Uf1), res)
 
+
 def Generate_Long_Range_Floquet( args):
 
     L = args['L']
@@ -388,6 +327,8 @@ def Generate_Long_Range_Floquet( args):
     hx = args['hx']
     hy = args['hy']
     hz = args['hz']
+
+    fil = args['fil']
     
     print "\nLong_Range Floquet Function\n"
     # Hamiltonian
@@ -449,8 +390,7 @@ def Generate_Long_Range_Floquet( args):
     Uf1 = slinalg.expm2(- 1j*T* H1)
     
     HPrethermal = (interactions + hx*Xprecession + Jx * XXprec)/L
-
-    
+  
     (w,v) = np.linalg.eigh(HPrethermal)
     groundstate = np.argmin(w)
     print "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w)
@@ -458,25 +398,87 @@ def Generate_Long_Range_Floquet( args):
     states.append(v[:,groundstate])
 
     rang = np.max(w) - np.min(w)
-    delta = 0.1
-
-    for i in range(1,6):
+    delta = 0.05
+    Nstates = 20
+    
+    for i in range(1,Nstates):
         #print i
         for o in range(2**L):
-            if abs(w[o]- np.min(w) - rang * float(i)/6.0) < delta:
+            if abs(w[o]- np.min(w) - rang * float(i)/Nstates) < delta:
                 states.append(v[:, o] )
                 break
             
-    #print len(states)
-    
-    
-    
-    # for i in range(2**L-1):
-    #     groundstate[i] == 0
-    # groundstate[2**L-1] = 1
-    
-    return (HPrethermal, w, Uf2.dot(Uf1), states) #HPrethermal acts over time T, H2, acts over a Delta term
+    FM = states[0] * 0
+    FM[2**L-1] = 1    
+    states.append(FM)
 
+    for dom in range(1,5):
+        size = L/dom
+        counter =1
+        l = 1
+        index = 0
+        for i in range(0, L):
+            index += l*2**i
+            if counter < size:
+                l = 1 - l
+                counter += 1
+            else:
+                counter = 1            
+        temp = states[0] * 0
+        temp[index] = 1
+        states.append(temp)
+
+    eigHPrethermal = w
+    InfTemp = np.sum(eigHPrethermal)
+        
+    #print "Computing HPrethermal Eigenvalues"
+    #eigHprethermal = np.linalg.eigvalsh( HPrethermal )
+
+    #(w_t,v_t) = np.linalg.eig(Floquet)
+    print "Computing Floquet Eigenvalues"
+    Floquet = Uf2.dot(Uf1)
+    (w, v) = EigenVectorsUnitary( Floquet )
+    eigFloquet = w
+
+    U = v
+    Udag = np.conj(v).T
+    Diag = np.array(w)
+
+
+    print "Testing Decomposition"
+    res = True
+    test1 = np.allclose( Udag.dot(U) ,  np.eye(2**L))
+    test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
+    res = res and test and test1
+
+
+    Obs_0 = []
+    O = SigmaTerms(sigmaz, L, [L/2])
+    Obs_0.append( O )
+    #Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
+
+    Obs_0.append(HPrethermal)
+
+    
+    preComputation = {'HPrethermal': HPrethermal,
+                      'Floquet':     Floquet,
+                      'U':           U,
+                      'Udag':        Udag,
+                      'Diag':        Diag,
+                      'Obs':         Obs_0,
+                      'res':         res,
+                      'L':           L,
+                      'InfTemp':     InfTemp,
+                      'args':        args,
+                      'eigHPrethermal': eigHPrethermal
+                      }
+
+    np.save('PreComp_'+fil, preComputation)
+    print "Finished Precomputation"
+    print "Saved to:"
+    print 'PreComp_'+fil+'.npy'
+        
+    return (states, 'PreComp_'+fil+'.npy')
 
 def Generate_Francisco( args):
     
@@ -594,7 +596,32 @@ def Generate_Francisco( args):
     HPrethermal = HPrethermal / L
     HPrethermal = HPrethermal[:, st]
     HPrethermal = HPrethermal[st, :]
+    
+    (w,v) = np.linalg.eigh(HPrethermal)
+    groundstate = np.argmin(w)
+    print "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w)
+    states = []
+    states.append(v[:,groundstate])
 
+    rang = np.max(w) - np.min(w)
+    delta = 0.1
+
+    for i in range(1,6):
+        #print i
+        for o in range(2**L):
+            if abs(w[o]- np.min(w) - rang * float(i)/6.0) < delta:
+                states.append(v[:, o] )
+                break
+            
+    #print len(states)
+    
+    
+    
+    # for i in range(2**L-1):
+    #     groundstate[i] == 0
+    # groundstate[2**L-1] = 1
+    
+    return (HPrethermal, w, Uf2.dot(Uf1), states, st) #HPrethermal acts over time T, H2, acts over a Delta term
     #if L <= 4:
     #    s = np.abs(slinalg.expm2(-1j * T * HPrethermal * J * L) - Uf1.dot(Uf2) ) 
     #    print np.max(np.max(s))
@@ -616,7 +643,6 @@ def Generate_Francisco( args):
     #print statesInt
   
     return (HPrethermal, Uf2.dot(Uf1), groundstate) #HPrethermal acts over time T, H2, acts over a Delta term
-
 
     
 def Compute_r(L, T, W, epsilon, eta, neighbour = False):
@@ -649,114 +675,33 @@ def Compute_r(L, T, W, epsilon, eta, neighbour = False):
     return np.mean(r)
     
 
-def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution='single',  logEvo = False, MAX_COUNTER = 4, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './'):
+def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 4, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './'):
 
-    (HPrethermal, eigHprethermal, Floquet, states) = Floq( args )
-    InfTemp = np.trace(HPrethermal)
-
-    #print "Computing HPrethermal Eigenvalues"
-    #eigHprethermal = np.linalg.eigvalsh( HPrethermal )
-
-    #(w_t,v_t) = np.linalg.eig(Floquet)
-    print "Computing Floquet Eigenvalues"
-    (w, v) = EigenVectorsUnitary( Floquet )
-    eigFloquet = w
-    # print np.abs(w)
-    # print np.abs(w_t)
-    # print 
-
-    # print max( np.abs(np.sort( np.real(w)) - np.sort( np.real(w_t)) ))
-    # print 
-    # print max( np.abs(np.sort( np.imag(w)) -np.sort( np.imag(w_t))) )
+    preComputation = np.load(preComputation_fil)[()]
+    #print preComputation
+    HPrethermal = preComputation['HPrethermal']
+    Floquet     = preComputation['Floquet']
+    U           = preComputation['U']
+    Udag        = preComputation['Udag']
+    Diag        = preComputation['Diag']
+    Obs_0       = preComputation['Obs']
+    Obs_t       = Obs_0
+    res         = preComputation['res']
+    L           = preComputation['L']
+    InfTemp     = preComputation['InfTemp']
+    eigHPrethermal = preComputation['eigHPrethermal']
+    w = Diag
     
-    
-    U = v
-    Udag = np.conj(v).T
-    Diag = np.array(w)
-
-    # angles = np.angle(w)
-    # print angles
-    # fil = 'J=%.2f    omega=%.2f   alpha=%.2f  hx=%.2f hy=%.2f hz=%.2f' % (args['J'], 1.0/args['T'], args['alpha'], args['hx'], args['hy'], args['hz']) 
-    # plt.title(fil)
-    # n, bins, patches = plt.hist(angles, 50, normed=1, range=[-3.5, 3.5])
-    # plt.ylabel('Normalized Histrogram')
-    # plt.xlabel('Complex Phase')
-    # plt.savefig(fil + '.png')
-    # plt.show()
-    # return 0
-
-
-    print "Testing Decomposition"
-    res = True
-    test1 = np.allclose( Udag.dot(U) ,  np.eye(2**L))
-    #test2 = np.allclose( U.dot(Udag) ,  np.eye(2**L))
-    #print np.diag(Udag.dot(U))
-    #print np.diag(U.dot(Udag))
-    res = res and test1 
-    #print "Unitary: ", test1 and test2
-    test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
-    res = res and test
-
-    #res = False
-
-    #print "Floquet"
-    #print Floquet
-    #print ""
-    #print ""
-
-    # If single        Compute a random spin in a random physical state
-    # If all           Compute all the spins in a random physical state
-    # If magnetization Compute only \sum_{i} \sigma_i^z
-
-    Obs_0 = []
-    Obs_t = []
-    alpha = []
-
-    if res:
-        print "Using Matrix Diagonalization"
-    else:
-        print "Using power of matrix"
-       
-    print "Looking at groundstate, eigenstates of HPrethermal, FM and different number of domains"
-    
-    Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
-
-    for i in Obs_0:
-        Obs_t.append( i )
-
-    Obs_0.append(HPrethermal)
-    Obs_t.append(HPrethermal)
-
-    FM = states[0] * 0
-    FM[2**L-1] = 1    
-    states.append(FM)
-
-    for dom in range(1,5):
-        size = L/dom
-        counter = 1
-        l = 1
-        index = 0
-        for i in range(0, L):
-            index += l*2**i
-            if counter < size:
-                l = 1 - l
-                counter += 1
-            else:
-                counter = 1
-            
-        temp = states[0] * 0
-        temp[index] = 1
-        states.append(temp)
-
     values = []
     energies = []
+    alpha = []
 
-
-    #for state in states:
-    #    print np.shape(state)
-  
+    states = [state]
+    
+    #print "Looking at state:", state
+                      
     if res:
+        print "Using Matrix Diagonalization"
         stateleft = []
         stateright = []
         
@@ -799,9 +744,8 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
         energies.append(en0)
 
     else:
+        print "Using power of matrix"
         for i in range(len(Obs_0)-1):
-            #print np.shape(Obs_0[i])
-            #print Obs_0[i][state,state]
             obs0 = []
             for state in states:
                 obs0.append( (state.dot(Obs_0[i]).dot(Obs_0[i]).dot(state))[0,0] )
@@ -973,26 +917,25 @@ def Compute_Evolution(L, Floq, args, Nsteps, state, fil = 'test.out', evolution=
         print np.max(np.abs( np.imag( energies) ) )
 
     info = {'L': L,
-            'args': args,
-            'Floquet': Floq.__name__,
-            'states': states,
+            'state': state,
             'Nsteps': Nsteps,
-            'fil': fil,
+            'result_fil': result_fil,
+            'preComputation_fil': preComputation_fil,
             'evolution': evolution,
             'logEvo': logEvo,
             'InfTemp': InfTemp,
             'SVD_Cutoff': SVD_Cutoff,
-            'EigHPrethermal': eigHprethermal,
-            'EigFloquet': eigFloquet}
+            'EigHPrethermal': eigHPrethermal,
+            'EigFloquet': w}
             
     output = {'values': values,
               'energies': energies,
-              'times': times, 'info': info,
-              #'fft': fft
+              'times': times,
+              'info': info,
               }
     print ""
-    print fil + ".npy"
-    np.save(output_folder + fil, output)
+    print result_fil + ".npy"
+    np.save(output_folder + result_fil, output)
     
     return output
         
