@@ -3,12 +3,12 @@
 #SBATCH -n 1 # Number of cores 
 #SBATCH -N 1 # All cores on one machine 
 #SBATCH -p general # Partition 
-#SBATCH --mem 8000 # Memory request (4Gb) 
-#SBATCH -t 0-8:00 # Maximum execution time (D-HH:MM) 
+#SBATCH --mem 64000 # Memory request (4Gb) 
+#SBATCH -t 0-12:00 # Maximum execution time (D-HH:MM) 
 #SBATCH -o Evolution_%A_%a.out # Standard output 
 #SBATCH -e Evolution_%A_%a.err # Standard error
 
-output_Folder="Nov_2/"
+output_Folder="Nov_4/"
 mkdir $output_Folder
 
 # params=("L 10 logEvo 0 Nsteps 200 hz 0 hx 0.17 hy 0.01 J 1 Jx 0.7 epsilon 0 alpha 10 T 0.124" \
@@ -338,17 +338,85 @@ mkdir $output_Folder
 #         "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 1 MAX_COUNTER 0" \
 # )
 
-params=("L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.2 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.3 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.4 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.5 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.6 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.7 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.8 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.9 MAX_COUNTER 0"\
-        "L 12 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 1 MAX_COUNTER 0" \
-)
+# params=("L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#         "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#         "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.21 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+# #
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.1 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.11 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.12 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.14 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.15 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.16 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.17 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.18 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.19 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.20 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+# #
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.1 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.11 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.12 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.14 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.15 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.16 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.17 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.18 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.19 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.20 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+# #
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.1 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.2 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.3 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.4 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.5 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.6 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.7 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.8 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.9 MAX_COUNTER 1"\
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 1.0 MAX_COUNTER 1"\
+# #
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.1 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.2 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.3 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.4 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.5 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.6 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.7 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.8 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 0.9 MAX_COUNTER 0"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.5 Omega 1.0 MAX_COUNTER 0"\
+# #
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.37 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.37 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+# #
+#     "L 10 logEvo 0 Nsteps 1e6 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"\
+# #
+#     "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 1 Jx 0.23"\
+#     "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0 Jx 0.23"\
+# )
+
+
+
+# params=(     "L 14 logEvo 1 Nsteps 4 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"
+#     "L 14 logEvo 1 Nsteps 1e2 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"
+#     "L 14 logEvo 1 Nsteps 1e3 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0")
+
+#params=( \
+#    "L 10 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.4 MAX_COUNTER 1" \
+#    "L 12 logEvo 1 Nsteps 1e8 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.4 MAX_COUNTER 0")
+
+params=(
+    "L 14 logEvo 1 Nsteps 4 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"
+    "L 14 logEvo 1 Nsteps 1e2 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"
+    "L 14 logEvo 1 Nsteps 1e3 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"
+    "L 14 logEvo 1 Nsteps 1e4 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0"
+    "L 14 logEvo 1 Nsteps 1e5 hz 0.0 hx 0.13 hy 0.01 J 1 Jx 0.0 epsilon 0 alpha 1.13 Omega 0.1 MAX_COUNTER 0")
+
+
+    
+
 
 echo "Running params"
 echo ${params[${SLURM_ARRAY_TASK_ID}]} 

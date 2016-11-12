@@ -135,7 +135,7 @@ Choice = 'GLRF'
 
 fil = Floquet[Choice][2] + ('_Log%d_Nsteps%d_MAX_COUNTER%d_12'%( logEvo, Nsteps, args['MAX_COUNTER'] ) )
 
-fil = fil + "Cutoff_%.8f"%SVD_Cutoff
+fil = fil + "Cutoff_%.8f"%SVD_Cutoff + 'Expokit'
 
 Floquet[Choice][1]['fil'] = fil
 
@@ -145,18 +145,18 @@ info = 0
 
 states, precomp_fil = Floquet[Choice][0]( Floquet[Choice][1])
 
-for k, state in enumerate(states):
-    print "Computing Evolution for state: ", state
-    Compute_Evolution(Nsteps,
-                      state,
-                      result_fil = fil + "_State%d"%(k),
-                      preComputation_fil = precomp_fil,
-                      evolution = 'single',
-                      logEvo = logEvo,
-                      MAX_COUNTER = args['MAX_COUNTER'],
-                      EIG_COUNTER = EIG_COUNTER,
-                      SVD_Cutoff = SVD_Cutoff,
-                      output_folder = args['-o'])
+#for k, state in enumerate(states):
+#    print "Computing Evolution for state: ", state
+#    Compute_Evolution(Nsteps,
+#                      state,
+#                      result_fil = fil + "_State%d"%(k),
+#                      preComputation_fil = precomp_fil,
+#                      evolution = 'single',
+#                      logEvo = logEvo,
+#                      MAX_COUNTER = args['MAX_COUNTER'],
+#                      EIG_COUNTER = EIG_COUNTER,
+#                      SVD_Cutoff = SVD_Cutoff,
+#                      output_folder = args['-o'])
     
 #np.save("Ave_R%d_"%(Rep) + fil, s)
 
