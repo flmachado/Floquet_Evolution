@@ -20,9 +20,9 @@ def dexpm(h, t):
     ideg = 4
     nstates = h.shape[0]
     lwsp = 4*nstates**2+ideg+1
-    ipiv = zeros(nstates, dtype=int)
+    ipiv = np.zeros(nstates, dtype=int)
     hsize = nstates**2
-    wsp = empty(lwsp)
+    wsp = np.empty(lwsp)
     i = dgpadm(ideg, t, h, wsp, ipiv)[0]-1
     print 'i =', i
     p = wsp[i:i+hsize].reshape(h.shape)
@@ -50,7 +50,7 @@ def EigenValueError(mat, err):
 def EigenVectorsUnitary(mat):
 
     (w_real, v) = np.linalg.eigh( (mat + np.conj(mat).T)/2)
-    w = []
+    print "Unitary Eigenvectors"
     print np.shape(v)
     print np.shape(mat)
     
@@ -347,9 +347,12 @@ def Generate_Long_Range_Floquet( args):
 
     output_fil = fil + 'OUT.out'
     out = open(output_fil, 'w')
+    out.close()
+    out = open(output_fil, 'a')
     
     print "\nLong_Range Floquet Function\n"
-    out.write("\nLong_Range Floquet Function: %s\n" % (time.localtime(time.time()) )  ) 
+    out.write("\nLong_Range Floquet Function: %s\n" % (time.localtime(time.time()) )  )
+    
     # Hamiltonian
     ########## First Half of evolution
     # Precession term:
@@ -412,13 +415,41 @@ def Generate_Long_Range_Floquet( args):
     #print H1
     print "Compute Uf1"
     out.write("Compute Uf1: %s\n" % (time.localtime(time.time()) ) )
-    Uf1 = slinalg.dexpm(- 1j*T* H1)
+
+    #Uf1_dexpm = dexpm(- 1j*T* H1, 1)
+    #Uf1_expm = slinalg.expm(- 1j*T* H1)
+    #Uf1_expm2  = slinalg.expm2(- 1j*T* H1)
+
+    # Fancy trick
+    (w,v) = slinalg.eigh(H1)
+    Uf1 = v.dot(np.diag( np.exp(-1j * T * w) ) ).dot(np.conj(v).T)
     
+    #print "Difference"
+    #print "Diff my diag vs exmp2: ",  np.max(np.abs(Uf1_expm2 - Uf1))
+    #print "Same: ", np.allclose(Uf1_, Uf1)
+
+    #(w_uf1, v_uf1) = slinalg.eig(Uf1)
+    #(w_Mine, v_mine) = EigenVectorsUnitary(Uf1)
+    #print np.max(np.abs(np.conj(v).T.dot(v[:,0])[1:]))
+    #print np.max(np.abs(np.conj(v_uf1).T.dot(v_uf1[:,0])[1:]))
+    #print np.max(np.abs(np.conj(v_mine).T.dot(v_mine[:,0])[1:]))
+    #print np.abs(np.linalg.eigvals( Uf1) )
+    #print np.abs(np.linalg.eigvals( Uf1_expm2) )
+    #print "Diff expm2 vs dexpm: ", np.max(np.abs(Uf1_dexpm - Uf1))
+
+    #print "Differences between Methods"
+    #print "dexpm: ", np.max(np.abs( Uf1__ - Uf1))
+    #print "expm:  ", np.max(np.abs( Uf1__ - Uf1_))
+   
     HPrethermal = (interactions + hx*Xprecession + Jx * XXprec)/L
   
     print "Compute Eigenvalues of HPrethermal"
     out.write("Compute Eigenvalues of HPrethermal: %s\n" % (time.localtime(time.time()) ) )
     (w,v) = np.linalg.eigh(HPrethermal)
+
+    eigHPrethermal = w
+    InfTemp = np.sum(eigHPrethermal)
+    
     HPrethermalEigenVectors = v
     groundstate = np.argmin(w)
     
@@ -458,8 +489,6 @@ def Generate_Long_Range_Floquet( args):
         temp[index] = 1
         states.append(temp)
 
-    eigHPrethermal = w
-    InfTemp = np.sum(eigHPrethermal)
         
     #print "Computing HPrethermal Eigenvalues"
     #eigHprethermal = np.linalg.eigvalsh( HPrethermal )
@@ -468,21 +497,63 @@ def Generate_Long_Range_Floquet( args):
     print "Computing Floquet Eigenvalues"
     out.write("Computing Floquet Eigenvalues: %s\n" % (time.localtime(time.time()) ) )
     Floquet = Uf2.dot(Uf1)
+    
+    #w_test = slinalg.eigvals(Floquet)
     (w, v) = EigenVectorsUnitary( Floquet )
+    w = w/np.abs(w)
     eigFloquet = w
 
     U = v
-    Udag = np.conj(v).T
+    #print U
+    #print v[:,0]
+    Udag = np.conj(U).T
     Diag = np.array(w)
 
+    # for i in range(2**L):
+    #     if np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i]) > 2e-6:
+    #         print np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i])
+    #         print "PROBLEM"
+    # for i in range(2**L):
+    #     for o in range(2**L):
+    #         if i==o: continue
+    #         else:
+    #             if np.abs(np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) ) > 1e-6:
+    #                 print np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) 
+    #                 print "prob"
 
-    print "Testing Decomposition"
+    #plt.imshow(np.log( np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L) ) )
+    #print np.max(np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L))
+    #plt.show()
+    #wa = np.angle(w)
+    #wa.sort()
+    #wa_ = np.angle(w_test)
+    #wa_.sort()
+
+    #print wa
+    #print "Major Difference: ", np.max(np.abs(wa-wa_))
+       
+    #print "Testing Decomposition"
     out.write("Testing Decomposition: %s\n" % (time.localtime(time.time()) ) )
     res = True
     test1 = np.allclose( Udag.dot(U) ,  np.eye(2**L))
-    test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
-    res = res and test and test1
+    test2 = np.allclose( U.dot(Udag), np.eye(2**L) )
+    print test1, test2                    
+    
+    #print "Big Diff Floquet:", np.max(np.abs( U.dot(np.diag(Diag) ).dot(Udag) - Floquet) )
+    #print "Big Diff Floquet:", np.max(np.abs( U.dot(np.diag(Diag**2) ).dot(Udag) - Floquet.dot(Floquet)) )
 
+    #for n in range(5):
+        #fig = plt.figure()
+        #plt.imshow(np.abs( U.dot(np.diag(Diag**n) ).dot(Udag) - np.linalg.matrix_power(Floquet,n)) )
+    #    print "Big Diff Floquet:", np.sum(np.abs( U.dot(np.diag(Diag**n) ).dot(Udag) - np.linalg.matrix_power(Floquet, n)))
+    #plt.show()
+    # test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
+    # print "U Udag: ",test, " , ", np.max(np.abs(U.dot(np.diag(Diag) ).dot(Udag) - Floquet))
+    # for i in range(50):
+    #     print np.max(np.abs(U.dot(np.diag(Diag**i) ).dot(Udag) - np.linalg.matrix_power(Floquet, i))), np.sum(np.abs(U.dot(np.diag(Diag**i) ).dot(Udag) - np.linalg.matrix_power(Floquet, i)))
+
+    #res = res and test and test1
+    #print "Diagonalizable: ", res
 
     Obs_0 = []
     Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
@@ -490,7 +561,6 @@ def Generate_Long_Range_Floquet( args):
     Obs_0.append( SigmaTerms(sigmaz, L, [L/2]) )
     Obs_0.append( SigmaTerms(sigmaz, L, [L-1-L/4]) )
     Obs_0.append( SigmaTerms(sigmaz, L, [L-1] ) ) 
-
 
     #Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
 
