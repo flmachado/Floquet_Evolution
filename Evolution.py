@@ -133,11 +133,12 @@ Floquet= {'GCP':  [Generate_Chetans_Prethermal,
 Choice = 'GLRF'
 #Choice = 'GF'
 
-fil = Floquet[Choice][2] + ('_Log%d_Nsteps%d_MAX_COUNTER%d_12'%( logEvo, Nsteps, args['MAX_COUNTER'] ) )
+fil = Floquet[Choice][2] #+ ('_Log%d_Nsteps%d_MAX_COUNTER%d_12'%( logEvo, Nsteps, args['MAX_COUNTER'] ) )
 
-fil = fil + "Cutoff_%.8f"%SVD_Cutoff + 'Expokit'
+fil = fil + "Cutoff_%.8f"%SVD_Cutoff + 'ExpEig_LessObs'
 
-Floquet[Choice][1]['fil'] = fil
+Floquet[Choice][1]['fil'] =  fil
+Floquet[Choice][1]['dir'] = args['-o']
 
 print "Filename: ",fil
 

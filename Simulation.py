@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as slinalg
 import time
-from expokit import dmexpv, dgpadm
+#from expokit import dmexpv, dgpadm
 
 from random import *
 
@@ -16,17 +16,17 @@ sigmaz = np.array([[1,0],
 iden   = np.array([[1,0],
                    [0,1]])
 
-def dexpm(h, t):
-    ideg = 4
-    nstates = h.shape[0]
-    lwsp = 4*nstates**2+ideg+1
-    ipiv = np.zeros(nstates, dtype=int)
-    hsize = nstates**2
-    wsp = np.empty(lwsp)
-    i = dgpadm(ideg, t, h, wsp, ipiv)[0]-1
-    print 'i =', i
-    p = wsp[i:i+hsize].reshape(h.shape)
-    return p.T
+# def dexpm(h, t):
+#     ideg = 4
+#     nstates = h.shape[0]
+#     lwsp = 4*nstates**2+ideg+1
+#     ipiv = np.zeros(nstates, dtype=int)
+#     hsize = nstates**2
+#     wsp = np.empty(lwsp)
+#     i = dgpadm(ideg, t, h, wsp, ipiv)[0]-1
+#     print 'i =', i
+#     p = wsp[i:i+hsize].reshape(h.shape)
+#     return p.T
 
 
 def Ewald( L,x, alpha):
@@ -504,8 +504,6 @@ def Generate_Long_Range_Floquet( args):
     eigFloquet = w
 
     U = v
-    #print U
-    #print v[:,0]
     Udag = np.conj(U).T
     Diag = np.array(w)
 
@@ -539,7 +537,9 @@ def Generate_Long_Range_Floquet( args):
     test2 = np.allclose( U.dot(Udag), np.eye(2**L) )
     print test1, test2                    
     
-    #print "Big Diff Floquet:", np.max(np.abs( U.dot(np.diag(Diag) ).dot(Udag) - Floquet) )
+    temp_big = np.max(np.abs( U.dot(np.diag(Diag) ).dot(Udag) - Floquet) )
+    print "Big Diff Floquet:", temp_big
+    out.write("Biggest Element difference: %.4f\n" % (temp_big ) )
     #print "Big Diff Floquet:", np.max(np.abs( U.dot(np.diag(Diag**2) ).dot(Udag) - Floquet.dot(Floquet)) )
 
     #for n in range(5):
@@ -556,11 +556,11 @@ def Generate_Long_Range_Floquet( args):
     #print "Diagonalizable: ", res
 
     Obs_0 = []
-    Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [L/4]) )
+#    Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
+#    Obs_0.append( SigmaTerms(sigmaz, L, [L/4]) )
     Obs_0.append( SigmaTerms(sigmaz, L, [L/2]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [L-1-L/4]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [L-1] ) ) 
+#    Obs_0.append( SigmaTerms(sigmaz, L, [L-1-L/4]) )
+#    Obs_0.append( SigmaTerms(sigmaz, L, [L-1] ) ) 
 
     #Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
 
@@ -573,6 +573,7 @@ def Generate_Long_Range_Floquet( args):
                       'Udag':        Udag,
                       'Diag':        Diag,
                       'Obs':         Obs_0,
+                      'ErrorDiag':   temp_big,
                       'res':         res,
                       'L':           L,
                       'InfTemp':     InfTemp,
@@ -582,7 +583,7 @@ def Generate_Long_Range_Floquet( args):
                       'states':      states
                       }
 
-    np.save('PreComp_'+fil, preComputation)
+    np.save(args['dir'] + 'PreComp_'+fil, preComputation)
     print "Finished Precomputation"
     print "Saved to:"
     print 'PreComp_'+fil+'.npy'

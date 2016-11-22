@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.linalg as slinalg
 import time
 
-def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 4, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './'):
+def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = 2):
 
     preComputation = np.load(preComputation_fil)[()]
     #print preComputation
@@ -12,16 +12,18 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     U           = preComputation['U']
     Udag        = preComputation['Udag']
     Diag        = preComputation['Diag']
-    Obs_0       = [ preComputation['Obs'][2] ]
-    f = open ('t.out','w')
-    f.write(str(len([ preComputation['Obs'][2] ])) + '\n')
-    f.write('%s\n'%(time.localtime(time.time() ) ) )
-    f.close()
+    Diag = Diag**(MAX_COUNTER)
+    Obs_0       = preComputation['Obs']
+    
+    Obs_0 = [Obs_0[ObsVal],Obs_0[-1]]
+
     Obs_t       = Obs_0
+    print "Number of Obs_0: " , len(Obs_0)
     res         = preComputation['res']
     L           = preComputation['L']
     InfTemp     = preComputation['InfTemp']
     eigHPrethermal = preComputation['eigHPrethermal']
+    
     w = Diag
     
     values = []
@@ -235,7 +237,7 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                 Diag = Diag/np.abs(Diag)
                     
         else:
-            times.append(times[-1] + 1)
+            times.append(times[-1] + MAX_COUNTER)
             if res:
                 Diag = Diag * w
                 Diag = Diag/np.abs(Diag)
