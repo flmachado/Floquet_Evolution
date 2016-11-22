@@ -12,9 +12,12 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     U           = preComputation['U']
     Udag        = preComputation['Udag']
     Diag        = preComputation['Diag']
-    Diag = Diag**(MAX_COUNTER)
-    Obs_0       = preComputation['Obs']
-    
+
+    if not logEvo:
+        Diag = Diag**(MAX_COUNTER)
+    print "MAX_COUNTER: ", MAX_COUNTER
+
+    Obs_0       = preComputation['Obs']    
     Obs_0 = [Obs_0[ObsVal],Obs_0[-1]]
 
     Obs_t       = Obs_0
