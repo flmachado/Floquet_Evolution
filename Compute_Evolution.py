@@ -13,6 +13,11 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     Udag        = preComputation['Udag']
     Diag        = preComputation['Diag']
 
+    print preComputation.keys()
+    D_U         = preComputation['D_U']
+    D_Udag      = preComputation['D_Udag']
+    D_Diag      = preComputation['D_Diag']
+    
     if not logEvo:
         Diag = Diag**(MAX_COUNTER)
     print "MAX_COUNTER: ", MAX_COUNTER
@@ -28,10 +33,17 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     eigHPrethermal = preComputation['eigHPrethermal']
     
     w = Diag
+
+    D_w = D_Diag
     
     values = []
+    D_values = []
+    
     energies = []
+    D_energies = []
+    
     alpha = []
+    D_alpha = []
 
     states = [state]
     
@@ -41,6 +53,9 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
         print "Using Matrix Diagonalization"
         stateleft = []
         stateright = []
+
+        D_stateleft = []
+        D_stateright = []
         
         for state in states:
             stateleft.append( np.conj(Udag.dot(state)))
@@ -49,6 +64,12 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                 temp.append( Udag.dot(Obs_0[i]).dot(state).T )
             stateright.append(temp)
 
+            D_stateleft.append( np.conj(D_Udag.dot(state)))
+            temp = []
+            for i in range(len(Obs_0)):
+                temp.append( D_Udag.dot(Obs_0[i]).dot(state).T )
+            D_stateright.append(temp)
+
             #print (np.conj(state).dot(U).dot(Udag).dot(Obs_0[i]).dot(state) )
             #print np.conj(state).dot(Obs_0[i]).dot(state)
 
@@ -56,36 +77,35 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
         for i in range(len(Obs_0)):
             alpha.append( Udag.dot( Obs_0[i] ).dot(U) )
 
+        for i in range(len(Obs_0)):
+            D_alpha.append( D_Udag.dot( Obs_0[i] ).dot(D_U) )
+
+            
         for i in range(len(Obs_0)-1):
             obs0 = []
+            D_obs0 = []
             for k in range(len(states)):
-                #print np.shape(alpha[i])
-                #print np.shape(stateleft[k])
-                #print np.shape(stateright[k])
-                obs0.append( (stateleft[k].dot(alpha[i]).dot( stateright[k][i] ) )[0,0] )
-                
-                #print obs0[-1]
-                #print states[k].dot(Obs_0[i]).dot(Obs_0[i]).dot(states[k])
-                #print np.diag(Udag.dot(U))
-                #print np.diag(U.dot(Udag))
-                #print np.diag(Obs_0[i].dot(Obs_0[i]) )
-                #print states[k].dot(U).dot(Obs_0[i]).dot(Obs_0[i]).dot(Udag).dot(states[k])
-                #print "\n"
-                #print i, k , (np.conj(stateleft[k]).dot( stateright[k] ) )[0,0]
+                obs0.append( (stateleft[k].dot(alpha[i]).dot( stateright[k][i] ) ) [0,0] )
+                D_obs0.append( (D_stateleft[k].dot(D_alpha[i]).dot( D_stateright[k][i] ) ) [0,0] )
 
             values.append([obs0])
+            D_values.append([D_obs0])
         
         en0 = []
+        D_en0 = []
         for k in range(len(states)):
-            en0.append( (stateleft[k].dot(alpha[-1]).dot( np.conj(stateleft[k].T)) )[0,0] )
+            en0.append( (stateleft[k].dot(alpha[-1]).dot( np.conj(stateleft[k].T)) ) [0,0] )
+            D_en0.append( (D_stateleft[k].dot(D_alpha[-1]).dot( np.conj(D_stateleft[k].T)) ) )
+            
         energies.append(en0)
+        D_energies.append(D_en0)
 
     else:
         print "Using power of matrix"
         for i in range(len(Obs_0)-1):
             obs0 = []
             for state in states:
-                obs0.append( (state.dot(Obs_0[i]).dot(Obs_0[i]).dot(state))[0,0] )
+                obs0.append( (state.dot(Obs_0[i]).dot(Obs_0[i]).dot(state))  [0,0] )
             values.append([obs0])
     
         en0 = []
@@ -107,31 +127,18 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     f.write('%s\n'%(time.localtime(time.time() ) ) )
     f.close()
 
-    def compute_Expectations(prod, i ):
+    def compute_Expectations(prod, i, D_prod = -1, compute_D = False ):
         if res:
             if i < len(Obs_0) - 1:
-                #prod = prod.dot(Obs_0[i]) 
                 obst = []
                 for k in range(len( states)):
-
-                    # print np.multiply(stateleft[k] ,np.conj(Diag)).shape
-                    # print stateleft[k].dot(np.diag(np.conj(Diag)) ).shape
-                    # print max( np.abs(np.multiply(stateleft[k] ,np.conj(Diag)) - stateleft[k].dot(np.diag(np.conj(Diag)) ) ))
-                    # print ""
-                    # print np.shape(Diag)
-                    # print stateright[k][i].T.shape, stateright[k][i].shape
-                    # print (stateright[k][i]*Diag).shape
-                    # print np.multiply(Diag , stateright[k][i]).shape
-                    # print np.multiply( stateright[k][i].T, Diag).T.shape
-                    # print np.diag(Diag).dot(stateright[k][i]).shape
-                    # print max( np.abs(np.multiply(Diag , stateright[k][i])- np.diag(Diag).dot(stateright[k][i])) )
-                    # print ""
-                    # print ""
                     obst.append( (
                         np.multiply(stateleft[k] ,np.conj(Diag)).dot( prod ).dot(
                             np.multiply( stateright[k][i].T, Diag).T)
                     )[0,0] )
 
+                    #print "ASDASD", (np.multiply(stateleft[k] ,np.conj(Diag)).dot( prod ).dot(
+                    #    np.multiply( stateright[k][i].T, Diag).T))
                     #print (stateleft[k].dot( prod ).dot(stateright[k][i])  )[0,0], states[k].dot( np.linalg.matrix_power(np.conj(Floquet).T, times[-1]+dt)).dot(Obs_0[i]).dot( np.linalg.matrix_power( Floquet, times[-1]+dt) ).dot(states[k])[0,0]
                 values[i].append(obst)
 
@@ -144,17 +151,37 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                     )[0,0] )
                 energies.append(ent)
 
+            if compute_D:
+                if i < len(Obs_0) - 1:
+                    D_obst = []
+                    for k in range(len( states)):
+                        D_obst.append( (
+                            np.multiply(D_stateleft[k] ,np.conj(D_Diag)).dot( D_prod ).dot(
+                            np.multiply( D_stateright[k][i].T, D_Diag).T)
+                        )[0,0] )
+                    #print (stateleft[k].dot( prod ).dot(stateright[k][i])  )[0,0], states[k].dot( np.linalg.matrix_power(np.conj(Floquet).T, times[-1]+dt)).dot(Obs_0[i]).dot( np.linalg.matrix_power( Floquet, times[-1]+dt) ).dot(states[k])[0,0]
+                    D_values[i].append(D_obst)
+
+                elif i == len(Obs_0) - 1:
+                    D_ent = []
+                    for k in range(len(states)):
+                        D_ent.append( (
+                            np.multiply(D_stateleft[k] , np.conj(D_Diag)).dot( D_prod ).dot(
+                                np.multiply( np.conj(D_stateleft[k]), D_Diag).T)
+                        ))#[0,0] )
+                    D_energies.append(D_ent)
+                
         else:
             if i < len(Obs_0) - 1:
                 obst = []
                 prod = prod.dot(Obs_0[i]) 
                 for state in states:
-                    obst.append( (np.conj(state).dot( prod ).dot(state) )[0,0] )
+                    obst.append( (np.conj(state).dot( prod ).dot(state) )  [0,0] )
                 values[i].append(obst)
             elif i == len(Obs_0) - 1:
                 ent = []
                 for state in states:
-                    ent.append( (np.conj(state).dot( prod ).dot(state))[0,0] )
+                    ent.append( (np.conj(state).dot( prod ).dot(state))  [0,0] )
                 energies.append(ent)
 
 
@@ -165,10 +192,7 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
 
             if logEvo:
                 if res == True:
-                    #prod = np.diag( np.conj(Diag) ).dot(alpha[i]).dot(np.diag( Diag) )
-                    #U.dot(np.diag(np.conj(Diag))).dot(alpha[i]).dot( np.diag(Diag) ).dot(Udag) 
-                    #compute_Expectations(prod, i)
-                    compute_Expectations(alpha[i], i)
+                    compute_Expectations(alpha[i], i, D_prod = D_alpha[i], compute_D = True )
                     
                                 
                 else:
@@ -205,9 +229,7 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                         
             else:
                 if res:
-                    #prod = np.diag(np.conj(Diag) ).dot(alpha[i]).dot( np.diag(Diag) )
-                    #compute_Expectations(prod, i)
-                    compute_Expectations(alpha[i], i)
+                    compute_Expectations(alpha[i], i, D_prod = D_alpha[i], compute_D = True)
            
                 else:
                     prod = np.conj(Floquet).T.dot(Obs_t[i]).dot(Floquet)
@@ -215,13 +237,7 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                     compute_Expectations(prod, i)
                     #values[i].append(prod[state,state])
 
-#                if i < len(Obs_0) - 1:
-#                    fft[i].append( np.fft.fft(values_FM[i]))
         if logEvo:
-            #print ""
-            #print "dt: ",dt
-            #print times[-1]
-            #print counter
 
             times.append( times[-1] + dt )
             if counter < MAX_COUNTER:
@@ -230,14 +246,19 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                 counter = 0 
                 dt *= 2
                 if res:
-                    w= w * w
+                    w = w * w
                     w = w / np.abs(w)
+                    D_w = D_w * D_w
+                    D_w = D_w / np.abs(D_w)
                 else:
                     FloquetEvo = FloquetEvo.dot(FloquetEvo)
 
             if res:
                 Diag = Diag * w
                 Diag = Diag/np.abs(Diag)
+
+                D_Diag = D_Diag * D_w
+                D_Diag = D_Diag/np.abs(D_Diag)
                     
         else:
             times.append(times[-1] + MAX_COUNTER)
@@ -251,14 +272,19 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     for i in range(len(Obs_0)-1):
         #print values[i]
         values[i] = np.array(values[i])
+        D_values[i] = np.array( D_values[i] )
 
-    energies = np.array(energies)
+    energies = np.array( energies)
+    D_energies = np.array(D_energies)
+    print D_energies
+    #print D_values
     if  np.max(np.abs( np.imag( energies) ) )> 1e-14:
         print "TOO MUCH IMAGINARY PART"
-        print energies
+        #print energies
         print np.max(np.abs( np.imag( energies) ) )
 
     info = {'L': L,
+            'args': preComputation['args'],
             'state': state,
             'Nsteps': Nsteps,
             'result_fil': result_fil,
@@ -272,12 +298,17 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
             
     output = {'values': values,
               'energies': energies,
+              'D_values': D_values,
+              'D_energies': D_energies,              
               'times': times,
               'info': info,
               }
+
     print ""
     print result_fil + ".npy"
     print output_folder + result_fil
+
+    #np.save("here", output)
     np.save(output_folder + result_fil, output)
     
     return output

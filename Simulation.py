@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as slinalg
 import time
+
 #from expokit import dmexpv, dgpadm
 
 from random import *
@@ -556,11 +557,13 @@ def Generate_Long_Range_Floquet( args):
     #print "Diagonalizable: ", res
 
     Obs_0 = []
-#    Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
-#    Obs_0.append( SigmaTerms(sigmaz, L, [L/4]) )
+
+    print SigmaTerms(sigmaz, L, [0])
+    Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
+    Obs_0.append( SigmaTerms(sigmaz, L, [L/4]) )
     Obs_0.append( SigmaTerms(sigmaz, L, [L/2]) )
-#    Obs_0.append( SigmaTerms(sigmaz, L, [L-1-L/4]) )
-#    Obs_0.append( SigmaTerms(sigmaz, L, [L-1] ) ) 
+    Obs_0.append( SigmaTerms(sigmaz, L, [L-1-L/4]) )
+    Obs_0.append( SigmaTerms(sigmaz, L, [L-1] ) ) 
 
     #Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
 
@@ -580,6 +583,9 @@ def Generate_Long_Range_Floquet( args):
                       'args':        args,
                       'eigHPrethermal':          eigHPrethermal,
                       'HPrethermalEigenVectors': HPrethermalEigenVectors,
+                      'D_U':         HPrethermalEigenVectors,
+                      'D_Udag':      np.conj(HPrethermalEigenVectors).T,
+                      'D_Diag':      np.exp(-1j * T * eigHPrethermal),
                       'states':      states
                       }
 
@@ -605,6 +611,8 @@ def Generate_Francisco( args):
     A = args['A'] * Omega
     dA = args['dA'] * Omega
 
+    fil = args['fil']
+
     
     print "\n Francisco\n"
     # Hamiltonian
@@ -615,8 +623,8 @@ def Generate_Francisco( args):
     for i in range(L):
         StaggeredZprecession += SigmaTerms(sigmaz, L, [i]) * (-1)**(i+1)
 
-    print StaggeredZprecession
-    print ""    
+    #print StaggeredZprecession
+    #print ""    
         
     XXprec = np.zeros((2**L, 2**L), dtype = 'complex64')
     for i in range(L-1):
@@ -628,21 +636,21 @@ def Generate_Francisco( args):
         j = (i+1)
         YYprec += SigmaTerms(sigmay, L, [i,j])
 
-    print XXprec + YYprec
-    print ""
+    #print XXprec + YYprec
+    #print ""
         
     ZZprec = np.zeros((2**L, 2**L), dtype = 'complex64')
     for i in range(L-1):
         j = (i+1)
         ZZprec += SigmaTerms(sigmaz, L, [i,j])
 
-    print ZZprec
-    print ""    
+    #print ZZprec
+    #print ""    
     LinearTerm = np.zeros((2**L, 2**L), dtype = 'complex64')
     for i in range(L):       
         LinearTerm += SigmaTerms(sigmaz, L, [i]) *(i+1)
-    print LinearTerm
-    print ""
+    #print LinearTerm
+    #print ""
 
     H1 = -(J/2)*(XXprec + YYprec) + (U/4) * ZZprec - (Omega-A)/4 * StaggeredZprecession - (dA/2) * LinearTerm
     H2 = -(J/2)*(XXprec + YYprec) + (U/4) * ZZprec - (Omega+A)/4 * StaggeredZprecession + (dA/2) * LinearTerm
@@ -684,7 +692,8 @@ def Generate_Francisco( args):
    
     Uf1 = slinalg.expm2(- 1j*T/2 * H1)
     Uf2 = slinalg.expm2(- 1j*T/2 * H2)
-
+    Floquet = Uf2.dot(Uf1)
+    
     def xi (x):
         return 2*x/ np.pi * np.cos( np.pi * x / 2 ) / (1-x**2)
 
@@ -708,8 +717,12 @@ def Generate_Francisco( args):
     HPrethermal = HPrethermal / L
     HPrethermal = HPrethermal[:, st]
     HPrethermal = HPrethermal[st, :]
+
+    InfTemp = np.trace(HPrethermal)
     
     (w,v) = np.linalg.eigh(HPrethermal)
+    eigHPrethermal = w
+    HPrethermalEigenVectors = v
     groundstate = np.argmin(w)
     print "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w)
     states = []
@@ -718,43 +731,123 @@ def Generate_Francisco( args):
     rang = np.max(w) - np.min(w)
     delta = 0.1
 
-    for i in range(1,6):
-        #print i
-        for o in range(2**L):
-            if abs(w[o]- np.min(w) - rang * float(i)/6.0) < delta:
-                states.append(v[:, o] )
-                break
+
+    for i in range(30):
+        k = randint(0, len(st)-1)
+        states.append(v[:, k] )
+        
             
     #print len(states)
     
+
+    (w, v) = EigenVectorsUnitary( Floquet )
+    w = w/np.abs(w)
+    eigFloquet = w
+
+    U = v
+    Udag = np.conj(U).T
+    Diag = np.array(w)
+
+    # for i in range(2**L):
+    #     if np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i]) > 2e-6:
+    #         print np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i])
+    #         print "PROBLEM"
+    # for i in range(2**L):
+    #     for o in range(2**L):
+    #         if i==o: continue
+    #         else:
+    #             if np.abs(np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) ) > 1e-6:
+    #                 print np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) 
+    #                 print "prob"
+
+    #plt.imshow(np.log( np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L) ) )
+    #print np.max(np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L))
+    #plt.show()
+    #wa = np.angle(w)
+    #wa.sort()
+    #wa_ = np.angle(w_test)
+    #wa_.sort()
+
+    #print wa
+    #print "Major Difference: ", np.max(np.abs(wa-wa_))
+       
+    #print "Testing Decomposition"
+
+    res = True
+    #fig = plt.figure()
+    #plt.imshow( np.real(Udag.dot(U) - np.eye(np.shape(Floquet)[0])))
+    #fig2 = plt.figure()
+    #plt.imshow( np.real(Udag.dot(U) - np.eye(np.shape(Floquet)[0])))
+    print np.max(np.abs(Udag.dot(U) - np.eye(np.shape(Floquet)[0])))
+    #plt.show()
+    test1 = np.allclose( Udag.dot(U) ,  np.eye(np.shape(Floquet)[0]))
+    test2 = np.allclose( U.dot(Udag), np.eye(np.shape(Floquet)[0]) )
+    print test1, test2                    
     
-    
-    # for i in range(2**L-1):
-    #     groundstate[i] == 0
-    # groundstate[2**L-1] = 1
-    
-    return (HPrethermal, w, Uf2.dot(Uf1), states, st) #HPrethermal acts over time T, H2, acts over a Delta term
-    #if L <= 4:
-    #    s = np.abs(slinalg.expm2(-1j * T * HPrethermal * J * L) - Uf1.dot(Uf2) ) 
-    #    print np.max(np.max(s))
-    #    plt.imshow( s )
-    #    plt.show()
+    temp_big = np.max(np.abs( U.dot(np.diag(Diag) ).dot(Udag) - Floquet) )
+    print "Big Diff Floquet:", temp_big
+
+
+    Obs_0 = []
+    tempObs = SigmaTerms(sigmaz, L, [0])
+    tempObs = tempObs[:,st]
+    tempObs = tempObs[st,:]
+    Obs_0.append( tempObs)
+
+
+    tempObs = SigmaTerms(sigmaz, L, [L/4])
+    tempObs = tempObs[:,st]
+    tempObs = tempObs[st,:]
+    Obs_0.append( tempObs)
+
+    tempObs = SigmaTerms(sigmaz, L, [L/2])
+    tempObs = tempObs[:,st]
+    tempObs = tempObs[st,:]
+    Obs_0.append( tempObs)
+
+
+    tempObs = SigmaTerms(sigmaz, L, [L-1-L/4])
+    tempObs = tempObs[:,st]
+    tempObs = tempObs[st,:]
+    Obs_0.append( tempObs)
+
+    tempObs = SigmaTerms(sigmaz, L, [L-1])
+    tempObs = tempObs[:,st]
+    tempObs = tempObs[st,:]
+    Obs_0.append( tempObs)
+
+    Obs_0.append(HPrethermal)
+
+
+    HPrethermalEvo = HPrethermalEigenVectors.dot(np.diag(np.exp(-1j * T * eigHPrethermal) )).dot( np.conj( HPrethermalEigenVectors).T)
+
+    print "ASDASD"
+
+    preComputation = {'HPrethermal': HPrethermal,
+                      'Floquet':     Floquet,
+                      'U':           U,
+                      'Udag':        Udag,
+                      'Diag':        Diag,
+                      'Obs':         Obs_0,
+                      'ErrorDiag':   temp_big,
+                      'res':         res,
+                      'L':           L,
+                      'InfTemp':     InfTemp,
+                      'args':        args,
+                      'HPrethermalEvo' : HPrethermalEvo,
+                      'eigHPrethermal':  eigHPrethermal,
+                      'D_U':         HPrethermalEvo,
+                      'D_Udag':      np.conj(HPrethermalEvo),
+                      'D_Diag':      np.exp(-1j * T * eigHPrethermal),
+                      'states':      states
+                      }
+
+    np.save(args['dir'] + 'PreComp_'+fil, preComputation)
+    print "Finished Precomputation"
+    print "Saved to:"
+    print 'PreComp_'+fil+'.npy'
         
-    #(w,v) = np.linalg.eigh(HPrethermal)
-
-    #groundstate = np.argmin(w)
-    #print groundstate
-    #groundstate = v[:,groundstate]
-
-    groundstate = np.zeros((1, 2**L))
-    groundstate[2**L-1] = 1
-    #statesInt = []
-    #for i in range(2**L):
-    #    if np.abs(groundstate[i]) > 1e-10:
-    #        statesInt.append(i)
-    #print statesInt
-  
-    return (HPrethermal, Uf2.dot(Uf1), groundstate) #HPrethermal acts over time T, H2, acts over a Delta term
+    return (states, 'PreComp_'+fil+'.npy')
 
     
 def Compute_r(L, T, W, epsilon, eta, neighbour = False):
