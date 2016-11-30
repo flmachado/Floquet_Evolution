@@ -1,5 +1,6 @@
 from Compute_Evolution import *
 import sys
+import os
 
 preComputation_Fil = sys.argv[1]
 #StateNum = sys.argv[2]
@@ -33,9 +34,12 @@ Obs_Val = int(args['Obs_Val'])
 
 fil = preComputation_Fil + "_State%d"%( StateNum) + ('_Log%d_Nsteps%d_MAX_COUNTER_%d_ObsVal_%d'%( logEvo, Nsteps, args['MAX_COUNTER'], Obs_Val) )
 
+(temp, fil) = os.path.split(fil)
+
 print "Computing Evolution for state: ", States[StateNum]
 print "Saving it as:"
-print fil
+print output_folder + fil
+
 
 
 Compute_Evolution(Nsteps,

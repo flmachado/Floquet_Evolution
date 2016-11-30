@@ -463,12 +463,12 @@ def Generate_Long_Range_Floquet( args):
     delta = 0.05
     Nstates = 20
     
-    for i in range(1,Nstates):
-        #print i
-        for o in range(2**L):
-            if abs(w[o]- np.min(w) - rang * float(i)/Nstates) < delta:
-                states.append(v[:, o] )
-                break
+    # for i in range(1,Nstates):
+    #     #print i
+    #     for o in range(2**L):
+    #         if abs(w[o]- np.min(w) - rang * float(i)/Nstates) < delta:
+    #             states.append(v[:, o] )
+    #             break
             
     FM = states[0] * 0
     FM[2**L-1] = 1    
