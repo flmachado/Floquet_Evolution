@@ -3,19 +3,12 @@ import matplotlib.pyplot as plt
 import scipy.linalg as slinalg
 import time
 
+from Helpful import *
 #from expokit import dmexpv, dgpadm
 
 from random import *
 
 #Constants of interest
-sigmax = np.array([[0,1],
-                   [1,0]])
-sigmay = np.array([[0,-1j],
-                   [1j,0]])
-sigmaz = np.array([[1,0],
-                   [0,-1]])
-iden   = np.array([[1,0],
-                   [0,1]])
 
 # def dexpm(h, t):
 #     ideg = 4
@@ -68,36 +61,8 @@ def Eigenvalues(Floquet):
 
     eig = np.linalg.eig(Floquet)[0]
     return np.sort(np.angle(-eig))
+   
 
-    
-def outer(A,B):
-    sa = np.shape(A)
-    sb = np.shape(B)
-
-    #print A, sa
-    #print B, sb
-
-    l = []
-    for i in range(sa[0]):
-        l.append([])
-        for o in range(sa[1]):
-            l[-1].append( A[i][o] * B)
-            
-    C = np.bmat(l)
-    #print C
-    #print np.shape(C), ":" , sa, sb
-    return C
- 
-
-def SigmaTerms(sigma, L, indices):
-
-    mat = np.array([[1]])
-    for k in range(0,L):
-        if k in indices:
-            mat = outer(sigma, mat)
-        else:
-            mat = outer(iden, mat)
-    return mat
 
 def Generate_Floquet_Operator(L,T,W,epsilon,eta):
     print "\nUSING THE FLOQUET_OPERATOR FUNCTION\n"
@@ -556,38 +521,39 @@ def Generate_Long_Range_Floquet( args):
     #res = res and test and test1
     #print "Diagonalizable: ", res
 
-    Obs_0 = []
+    #Obs_0 = []
 
-    print SigmaTerms(sigmaz, L, [0])
-    Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [L/4]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [L/2]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [L-1-L/4]) )
-    Obs_0.append( SigmaTerms(sigmaz, L, [L-1] ) ) 
+    #print SigmaTerms(sigmaz, L, [0])
+    #Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
+    #Obs_0.append( SigmaTerms(sigmaz, L, [L/4]) )
+    #Obs_0.append( SigmaTerms(sigmaz, L, [L/2]) )
+    #Obs_0.append( SigmaTerms(sigmaz, L, [L-1-L/4]) )
+    #Obs_0.append( SigmaTerms(sigmaz, L, [L-1] ) ) 
 
     #Obs_0.append( SigmaTerms(sigmaz, L, [1]) )
 
-    Obs_0.append(HPrethermal)
+    #Obs_0.append(HPrethermal)
 
     
-    preComputation = {'HPrethermal': HPrethermal,
-                      'Floquet':     Floquet,
-                      'U':           U,
-                      'Udag':        Udag,
-                      'Diag':        Diag,
-                      'Obs':         Obs_0,
-                      'ErrorDiag':   temp_big,
-                      'res':         res,
-                      'L':           L,
-                      'InfTemp':     InfTemp,
-                      'args':        args,
-                      'eigHPrethermal':          eigHPrethermal,
-                      'HPrethermalEigenVectors': HPrethermalEigenVectors,
-                      'D_U':         HPrethermalEigenVectors,
-                      'D_Udag':      np.conj(HPrethermalEigenVectors).T,
-                      'D_Diag':      np.exp(-1j * T * eigHPrethermal),
-                      'states':      states
-                      }
+    preComputation = {
+        'HPrethermal': HPrethermal,
+        #'Floquet':     Floquet,
+        'U':           U,
+        #'Udag':        Udag,
+        'Diag':        Diag,
+        #'Obs':         Obs_0,
+        'ErrorDiag':   temp_big,
+        'res':         res,
+        'L':           L,
+        'InfTemp':     InfTemp,
+        'args':        args,
+        'eigHPrethermal':          eigHPrethermal,
+        #'HPrethermalEigenVectors': HPrethermalEigenVectors,
+        'D_U':         HPrethermalEigenVectors,
+        #'D_Udag':      np.conj(HPrethermalEigenVectors).T,
+        'D_Diag':      np.exp(-1j * T * eigHPrethermal),
+        'states':      states
+    }
 
     np.save(args['dir'] + 'PreComp_'+fil, preComputation)
     print "Finished Precomputation"

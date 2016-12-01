@@ -3,32 +3,34 @@ import matplotlib.pyplot as plt
 import scipy.linalg as slinalg
 import time
 
+from Helpful import *
+
 def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = 2):
 
     preComputation = np.load(preComputation_fil)[()]
-    #print preComputation
-    HPrethermal = preComputation['HPrethermal']
-    Floquet     = preComputation['Floquet']
+    L           = preComputation['L']
+
     U           = preComputation['U']
-    Udag        = preComputation['Udag']
+    Udag        = np.conj(U).T
     Diag        = preComputation['Diag']
 
-    print preComputation.keys()
     D_U         = preComputation['D_U']
-    D_Udag      = preComputation['D_Udag']
+    D_Udag      = np.conj(D_U).T
     D_Diag      = preComputation['D_Diag']
     
     if not logEvo:
         Diag = Diag**(MAX_COUNTER)
     print "MAX_COUNTER: ", MAX_COUNTER
 
-    Obs_0       = preComputation['Obs']    
-    Obs_0 = [Obs_0[ObsVal],Obs_0[-1]]
 
+    Obs_0 = SigmaTerms(sigmaz, L, [0])
+    
+    HPrethermal = preComputation['HPrethermal']
+        
     Obs_t       = Obs_0
     print "Number of Obs_0: " , len(Obs_0)
     res         = preComputation['res']
-    L           = preComputation['L']
+
     InfTemp     = preComputation['InfTemp']
     eigHPrethermal = preComputation['eigHPrethermal']
     
@@ -48,6 +50,9 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     alpha = []
     D_alpha = []
 
+    alphaEn = []
+    D_alphaEn = []
+
     states = [state]
     
     NZZ = len(Obs_0) - 1
@@ -66,70 +71,61 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
         
         for state in states:
             stateleft.append( np.conj(Udag.dot(state)))
-            temp = []
-            for i in range(len(Obs_0)):
-                temp.append( Udag.dot(Obs_0[i]).dot(state).T )
-            stateright.append(temp)
+            stateright.append( Udag.dot(Obs_0).dot(state).T )
 
             D_stateleft.append( np.conj(D_Udag.dot(state)))
-            temp = []
-            for i in range(len(Obs_0)):
-                temp.append( D_Udag.dot(Obs_0[i]).dot(state).T )
-            D_stateright.append(temp)
-
-            #print (np.conj(state).dot(U).dot(Udag).dot(Obs_0[i]).dot(state) )
-            #print np.conj(state).dot(Obs_0[i]).dot(state)
-
-
-        for i in range(len(Obs_0)):
-            alpha.append( Udag.dot( Obs_0[i] ).dot(U) )
-
-        for i in range(len(Obs_0)):
-            D_alpha.append( D_Udag.dot( Obs_0[i] ).dot(D_U) )
-
+            D_stateright.append( D_Udag.dot(Obs_0).dot(state).T )
             
-        for i in range(NZZ):
-            obs0 = []
-            D_obs0 = []
-            for k in range(len(states)):
-                obs0.append( (stateleft[k].dot(alpha[i]).dot( stateright[k][i] ) ) [0,0] )
-                D_obs0.append( (D_stateleft[k].dot(D_alpha[i]).dot( D_stateright[k][i] ) ) [0,0] )
 
-            valuesZZ.append([obs0])
-            D_valuesZZ.append([D_obs0])
+        alpha =  Udag.dot( Obs_0 ).dot(U) 
+        D_alpha = D_Udag.dot( Obs_0 ).dot(D_U)
 
-        for i in range(NZZ, NZZ+NZ):
-            Z0 = []
-            D_Z0 = []
-            for k in range(len(states)):
-                Z0.append( (stateleft[k].dot(alpha[i-NZZ]).dot( np.conj(stateleft[k].T)) ) [0,0] )
-                D_Z0.append( (D_stateleft[k].dot(D_alpha[i-NZZ]).dot( np.conj(D_stateleft[k].T)) ) )
+        alphaEn =  Udag.dot( HPrethermal ).dot(U)
+        D_alphaEn = D_Udag.dot( HPrethermal ).dot(D_U)
+        
+        ZZ0 = []
+        D_ZZ0 = []
+        for k in range(len(states)):
+            ZZ0.append( (stateleft[k].dot(alpha).dot( stateright[k] ) ) [0,0] )
+            D_ZZ0.append( (D_stateleft[k].dot(D_alpha).dot( D_stateright[k] ) ) [0,0] )
+
+        valuesZZ.append(ZZ0)
+        D_valuesZZ.append(D_ZZ0)
+
+        Z0 = []
+        D_Z0 = []
+        for k in range(len(states)):
+            Z0.append( (stateleft[k].dot(alpha).dot( np.conj(stateleft[k].T)) ) )
+            D_Z0.append( (D_stateleft[k].dot(D_alpha).dot( np.conj(D_stateleft[k].T)) ) )
             
-            valuesZ.append(Z0)
-            D_valuesZ.append(D_Z0)
+        valuesZ.append(Z0)
+        D_valuesZ.append(D_Z0)
 
         en0 = []
         D_en0 = []
         for k in range(len(states)):
-            en0.append( (stateleft[k].dot(alpha[-1]).dot( np.conj(stateleft[k].T)) ) [0,0] )
-            D_en0.append( (D_stateleft[k].dot(D_alpha[-1]).dot( np.conj(D_stateleft[k].T)) ) )
+            en0.append( (stateleft[k].dot(alphaEn).dot( np.conj(stateleft[k].T)) ) [0,0] )
+            D_en0.append( (D_stateleft[k].dot(D_alphaEn).dot( np.conj(D_stateleft[k].T)) ) )
             
         energies.append(en0)
         D_energies.append(D_en0)
 
     else:
-        print "Using power of matrix"
-        for i in range(len(Obs_0)-1):
-            obs0 = []
-            for state in states:
-                obs0.append( (state.dot(Obs_0[i]).dot(Obs_0[i]).dot(state))  [0,0] )
-            values.append([obs0])
+        print "NO LONGER SUPPOERTED"
+
+    # else:
+    #     print "Using power of matrix"
+    #     for i in range(len(Obs_0)-1):
+    #         obs0 = []
+    #         for state in states:
+    #             obs0.append( (state.dot(Obs_0[i]).dot(Obs_0[i]).dot(state))  [0,0] )
+    #         values.append([obs0])
     
-        en0 = []
-        for state in states:
-            en0.append( (state.dot(HPrethermal).dot(state)))
-        energies.append(en0)
-        FloquetEvo = Floquet
+    #     en0 = []
+    #     for state in states:
+    #         en0.append( (state.dot(HPrethermal).dot(state)))
+    #     energies.append(en0)
+    #     FloquetEvo = Floquet
 
     c = 0
     cc = 1
@@ -139,125 +135,106 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
     eigCounter = 0
     dt = 1
 
-    f = open ('t.out','w')
-    f.write('Finish precomputation\n')
-    f.write('%s\n'%(time.localtime(time.time() ) ) )
-    f.close()
-
-    def compute_Expectations(prod, i, D_prod = -1, compute_D = False ):
+    def compute_Expectations():
         if res:
-            if i < NZZ:
-                obst = []
-                for k in range(len( states)):
-                    obst.append( (
-                        np.multiply(stateleft[k] ,np.conj(Diag)).dot( prod ).dot(
-                            np.multiply( stateright[k][i].T, Diag).T)
-                    )[0,0] )
+            obst = []
+            for k in range(len( states)):
+                obst.append( (
+                    np.multiply(stateleft[k] ,np.conj(Diag)).dot( alpha ).dot(
+                        np.multiply( stateright[k].T, Diag).T)
+                )[0,0] )
 
-                    #print "ASDASD", (np.multiply(stateleft[k] ,np.conj(Diag)).dot( prod ).dot(
-                    #    np.multiply( stateright[k][i].T, Diag).T))
-                    #print (stateleft[k].dot( prod ).dot(stateright[k][i])  )[0,0], states[k].dot( np.linalg.matrix_power(np.conj(Floquet).T, times[-1]+dt)).dot(Obs_0[i]).dot( np.linalg.matrix_power( Floquet, times[-1]+dt) ).dot(states[k])[0,0]
-                valuesZZ[i].append(obst)
+            valuesZZ.append(obst)
             
-            elif i < NZZ+NZ:
-                Zt = []
-                for k in range(len(states)):
-                    ent.append( (
-                        np.multiply(stateleft[k] , np.conj(Diag)).dot( prod ).dot(
-                            np.multiply( np.conj(stateleft[k]), Diag).T)
-                    )[0,0] )
-                valuesZ[i].append(Zt)
 
-            elif i == NZZ+NZ:
-                ent = []
-                for k in range(len(states)):
-                    ent.append( (
-                        np.multiply(stateleft[k] , np.conj(Diag)).dot( prod ).dot(
-                            np.multiply( np.conj(stateleft[k]), Diag).T)
-                    )[0,0] )
-                energies.append(ent)
-
-            if compute_D:
-                if i < NZZ:
-                    D_obst = []
-                    for k in range(len( states)):
-                        D_obst.append( (
-                            np.multiply(D_stateleft[k] ,np.conj(D_Diag)).dot( D_prod ).dot(
-                            np.multiply( D_stateright[k][i].T, D_Diag).T)
-                        )[0,0] )
-                    #print (stateleft[k].dot( prod ).dot(stateright[k][i])  )[0,0], states[k].dot( np.linalg.matrix_power(np.conj(Floquet).T, times[-1]+dt)).dot(Obs_0[i]).dot( np.linalg.matrix_power( Floquet, times[-1]+dt) ).dot(states[k])[0,0]
-                    D_valuesZZ[i].append(D_obst)
-
-                elif i < NZZ+NZ:
-                    D_Zt = []
-                    for k in range(len(states)):
-                        ent.append( (
-                                np.multiply(stateleft[k] , np.conj(D_Diag)).dot( prod ).dot(
-                                    np.multiply( np.conj(stateleft[k]), D_Diag).T)
-                                )[0,0] )
-                    D_valuesZ[i].append(D_Zt)
+            Zt = []
+            for k in range(len(states)):
+                Zt.append( (
+                    np.multiply(stateleft[k] , np.conj(Diag)).dot( alpha ).dot(
+                        np.multiply( np.conj(stateleft[k]), Diag).T)
+                )[0,0] )
+                    
+            valuesZ.append(Zt)
 
 
-                elif i == NZZ+NZ:
-                    D_ent = []
-                    for k in range(len(states)):
-                        D_ent.append( (
-                            np.multiply(D_stateleft[k] , np.conj(D_Diag)).dot( D_prod ).dot(
-                                np.multiply( np.conj(D_stateleft[k]), D_Diag).T)
-                        ))#[0,0] )
-                    D_energies.append(D_ent)
+            ent = []
+            for k in range(len(states)):
+                ent.append( (
+                    np.multiply(stateleft[k] , np.conj(Diag)).dot( alphaEn ).dot(
+                        np.multiply( np.conj(stateleft[k]), Diag).T)
+                )[0,0] )
+            energies.append(ent)
+
+            D_obst = []
+            for k in range(len( states)):
+                D_obst.append( (
+                    np.multiply(D_stateleft[k] ,np.conj(D_Diag)).dot( D_alpha ).dot(
+                        np.multiply( D_stateright[k].T, D_Diag).T)
+                )[0,0] )
+            D_valuesZZ.append(D_obst)
+
+            D_Zt = []
+            for k in range(len(states)):
+                D_Zt.append( (
+                    np.multiply(stateleft[k] , np.conj(D_Diag)).dot( D_alpha ).dot(
+                        np.multiply( np.conj(stateleft[k]), D_Diag).T)
+                )[0,0] )
+            D_valuesZ.append(D_Zt)
+            
+            D_ent = []
+            for k in range(len(states)):
+                D_ent.append( (
+                    np.multiply(D_stateleft[k] , np.conj(D_Diag)).dot( D_alphaEn ).dot(
+                        np.multiply( np.conj(D_stateleft[k]), D_Diag).T)
+                ))#[0,0] )
+            D_energies.append(D_ent)
                 
         else:
-            if i < len(Obs_0) - 1:
-                obst = []
-                prod = prod.dot(Obs_0[i]) 
-                for state in states:
-                    obst.append( (np.conj(state).dot( prod ).dot(state) )  [0,0] )
-                values[i].append(obst)
-            elif i == len(Obs_0) - 1:
-                ent = []
-                for state in states:
-                    ent.append( (np.conj(state).dot( prod ).dot(state))  [0,0] )
-                energies.append(ent)
+            print "NO LONGER SUPPORTED"
+            # if i < len(Obs_0) - 1:
+            #     obst = []
+            #     prod = prod.dot(Obs_0[i]) 
+            #     for state in states:
+            #         obst.append( (np.conj(state).dot( prod ).dot(state) )  [0,0] )
+            #     values[i].append(obst)
+            # elif i == len(Obs_0) - 1:
+            #     ent = []
+            #     for state in states:
+            #         ent.append( (np.conj(state).dot( prod ).dot(state))  [0,0] )
+            #     energies.append(ent)
 
 
     while times[-1] < Nsteps:
         #print times[-1]
         # Evolve the different observables:
-        for i in range(NZZ + NZ + NEn ):
-
-            if logEvo:
-                if res == True:
-                    if i >= NZZ:
-                        l = i-NZZ
-                    else:
-                        l = i
-
-                    compute_Expectations(alpha[l], i, D_prod = D_alpha[l], compute_D = True )
+        if logEvo:
+            if res == True:
+                compute_Expectations()
                     
                                 
-                else:
-                    prod =  np.conj(FloquetEvo).T.dot(Obs_t[i]).dot( FloquetEvo)
-                    Obs_t[i] = prod
+            else:
+                print "NO LONGER SUPPORTED"
+                    # prod =  np.conj(FloquetEvo).T.dot(Obs_t[i]).dot( FloquetEvo)
+                    # Obs_t[i] = prod
 
-                    if eigCounter == EIG_COUNTER:
-                        print "Checking Numerics"
-                        print times[-1]
-                        Need_SVD = EigenValueError(FloquetEvo , SVD_Cutoff )
+                    # if eigCounter == EIG_COUNTER:
+                    #     print "Checking Numerics"
+                    #     print times[-1]
+                    #     Need_SVD = EigenValueError(FloquetEvo , SVD_Cutoff )
 
-                        eigCounter = 0
-                        #l = min(np.abs(np.linalg.eigvals( FloquetEvo) ) )
-                        #print l
-                        if Need_SVD: #l < 1 - SVD_Cutoff:
-                            #print "Lowest absolute eigenvalue", l
-                            print "Applying SVD procedure"
-                            print "Time: ", times[-1]
-                            (U, s, V) = np.linalg.svd( FloquetEvo )
-                            FloquetEvo = U.dot(V)
-                    else:
-                        eigCounter += 1
+                    #     eigCounter = 0
+                    #     #l = min(np.abs(np.linalg.eigvals( FloquetEvo) ) )
+                    #     #print l
+                    #     if Need_SVD: #l < 1 - SVD_Cutoff:
+                    #         #print "Lowest absolute eigenvalue", l
+                    #         print "Applying SVD procedure"
+                    #         print "Time: ", times[-1]
+                    #         (U, s, V) = np.linalg.svd( FloquetEvo )
+                    #         FloquetEvo = U.dot(V)
+                    # else:
+                    #     eigCounter += 1
 
-                    compute_Expectations(prod, i)
+                    # compute_Expectations(prod, i)
                         
                     # if i < len(Obs_0) - 1:
                     #     for state in states:
@@ -268,20 +245,16 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                     #         ent.append( (state.dot( prod ).dot(state))[0,0] )
                     #     energies.append([ent])
                         
+        else:
+            if res:
+                    compute_Expectations()
+                    
             else:
-                if res:
-                    if i >= NZZ:
-                        l = i-NZZ
-                    else:
-                        l = i
-
-                    compute_Expectations(alpha[l], i, D_prod = D_alpha[l], compute_D = True)
-           
-                else:
-                    prod = np.conj(Floquet).T.dot(Obs_t[i]).dot(Floquet)
-                    Obs_t[i] = prod
-                    compute_Expectations(prod, i)
-                    #values[i].append(prod[state,state])
+                print "NO LONGER SUPPORTED"
+                # prod = np.conj(Floquet).T.dot(Obs_t[i]).dot(Floquet)
+                #     Obs_t[i] = prod
+                #     compute_Expectations(prod, i)
+                #     #values[i].append(prod[state,state])
 
         if logEvo:
 
@@ -294,6 +267,7 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
                 if res:
                     w = w * w
                     w = w / np.abs(w)
+
                     D_w = D_w * D_w
                     D_w = D_w / np.abs(D_w)
                 else:
@@ -315,21 +289,24 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
         
     times = np.array(times[:])
 
-    for i in range(NZZ):
-        #print values[i]
-        valuesZZ[i] = np.array(valuesZZ[i])
-        D_valuesZZ[i] = np.array( D_valuesZZ[i] )
+    
+    valuesZZ = np.array(valuesZZ)
+    D_valuesZZ = np.array( D_valuesZZ )
 
-    for i in range(NZZ, NZZ+NZ ):
-        #print values[i]
-        valuesZ[i-NZZ] = np.array(valuesZ[i-NZZ])
-        D_valuesZ[i-NZZ] = np.array( D_valuesZ[i-NZZ] )
+
+
+    #print values[i]
+    valuesZ = np.array(valuesZ)
+    #print valuesZ[i-NZZ]
+    D_valuesZ = np.array( D_valuesZ )
 
 
     energies = np.array( energies)
+#    print "EN", energies
     D_energies = np.array(D_energies)
-    print D_energies
+#    print "DEN", D_energies
     #print D_values
+    
     if  np.max(np.abs( np.imag( energies) ) )> 1e-14:
         print "TOO MUCH IMAGINARY PART"
         #print energies
