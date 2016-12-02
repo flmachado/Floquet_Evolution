@@ -5,7 +5,7 @@ import time
 
 from Helpful import *
 
-def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = 2):
+def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = 2):
 
     preComputation = np.load(preComputation_fil)[()]
     L           = preComputation['L']
@@ -312,9 +312,11 @@ def Compute_Evolution(Nsteps, state, result_fil, preComputation_fil, evolution='
         #print energies
         print np.max(np.abs( np.imag( energies) ) )
 
+        #print stateDesc
     info = {'L': L,
             'args': preComputation['args'],
             'state': state,
+            'stateDesc': stateDesc,
             'Nsteps': Nsteps,
             'result_fil': result_fil,
             'preComputation_fil': preComputation_fil,
