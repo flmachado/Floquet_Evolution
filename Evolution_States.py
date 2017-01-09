@@ -5,7 +5,7 @@ import os
 preComputation_Fil = sys.argv[1]
 #StateNum = sys.argv[2]
 
-States = np.load(preComputation_Fil)[()]['states']
+
 
 args = {'Nsteps': 10**8,
         'state': -1,
@@ -13,7 +13,7 @@ args = {'Nsteps': 10**8,
         'MAX_COUNTER': 2,
         'SVD_Cutoff': 1e-7,
         'EIG_COUNTER': 25,
-        'Obs_Val': 2,
+        'Obs_Val': -1,
         '-o': './',
         'stateDesc' : "X"}
 
@@ -24,6 +24,7 @@ for i in range(2, len(sys.argv), 2):
         else:
             args[ sys.argv[i]] = float(sys.argv[i+1])
 
+strNsteps = args['Nsteps']
 Nsteps = int(args['Nsteps'])
 StateNum = int(args['state'])
 logEvo = args['logEvo']
@@ -33,12 +34,13 @@ SVD_Cutoff = args['SVD_Cutoff']
 output_folder = args['-o']
 Obs_Val = int(args['Obs_Val'])
 
-L = int(np.log2(len(States[0]))+0.001)
-state = States[0] * 0
+L = np.load(preComputation_Fil)[()]['L']
+state = np.zeros(2**L, dtype='complex')
+
 if not (args['stateDesc'] == "X"):
     StateNum = 0
     for i in range(L):
-        if args['stateDesc'][i] == 'U':
+        if args['stateDesc'][i] == 'D':
             StateNum += 2**i
             print StateNum
 
@@ -52,7 +54,7 @@ else:
 
 
 
-fil = preComputation_Fil + "_State%s"%(args['stateDesc']) + ('_Log%d_Nsteps%d_MAX_COUNTER_%d_ObsVal_%d'%( logEvo, Nsteps, args['MAX_COUNTER'], Obs_Val) )
+fil = preComputation_Fil + "_State%s"%(args['stateDesc']) + ('_Log%d_Nsteps%s_MAX_COUNTER_%d_ObsVal_%d'%( logEvo, strNsteps, args['MAX_COUNTER'], Obs_Val) )
 
 (temp, fil) = os.path.split(fil)
 state[StateNum] = 1

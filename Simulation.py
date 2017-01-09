@@ -545,14 +545,14 @@ def Generate_Long_Range_Floquet( args):
         'ErrorDiag':   temp_big,
         'res':         res,
         'L':           L,
-        'InfTemp':     InfTemp,
+        #'InfTemp':     InfTemp,
         'args':        args,
         'eigHPrethermal':          eigHPrethermal,
         #'HPrethermalEigenVectors': HPrethermalEigenVectors,
-        'D_U':         HPrethermalEigenVectors,
+        #'D_U':         HPrethermalEigenVectors,
         #'D_Udag':      np.conj(HPrethermalEigenVectors).T,
-        'D_Diag':      np.exp(-1j * T * eigHPrethermal),
-        'states':      states
+        #'D_Diag':      np.exp(-1j * T * eigHPrethermal),
+        'states':      states[0]
     }
 
     np.save(args['dir'] + 'PreComp_'+fil, preComputation)

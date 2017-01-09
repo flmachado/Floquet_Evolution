@@ -5,7 +5,7 @@ import time
 
 from Helpful import *
 
-def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = 2):
+def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = -1):
 
     preComputation = np.load(preComputation_fil)[()]
     L           = preComputation['L']
@@ -14,16 +14,23 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     Udag        = np.conj(U).T
     Diag        = preComputation['Diag']
 
-    D_U         = preComputation['D_U']
-    D_Udag      = np.conj(D_U).T
-    D_Diag      = preComputation['D_Diag']
+    Compute_D = False
+    if "D_U" in preComputation.keys():
+        D_U         = preComputation['D_U']
+        D_Udag      = np.conj(D_U).T
+        D_Diag      = preComputation['D_Diag']
+        Compute_D   = True
     
     if not logEvo:
         Diag = Diag**(MAX_COUNTER)
     print "MAX_COUNTER: ", MAX_COUNTER
 
-
-    Obs_0 = SigmaTerms(sigmaz, L, [0])
+    
+    if ObsVal == -1:
+        print "WRONG OBS _ Setting OBSVAL = 0"
+        ObsVal = 0
+    
+    Obs_0 = SigmaTerms(sigmaz, L, [ ObsVal ])
     
     HPrethermal = preComputation['HPrethermal']
         
@@ -31,27 +38,24 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     print "Number of Obs_0: " , len(Obs_0)
     res         = preComputation['res']
 
-    InfTemp     = preComputation['InfTemp']
-    eigHPrethermal = preComputation['eigHPrethermal']
+    #InfTemp     = preComputation['InfTemp']
+    #eigHPrethermal = preComputation['eigHPrethermal']
     
     w = Diag
-
-    D_w = D_Diag
-    
     valuesZZ = []
-    D_valuesZZ = []
-
     valuesZ = []
-    D_valuesZ = []
-    
     energies = []
-    D_energies = []
-    
     alpha = []
-    D_alpha = []
-
     alphaEn = []
-    D_alphaEn = []
+
+    if Compute_D:
+        D_w = D_Diag    
+        D_valuesZZ = []
+        D_valuesZ = []
+        D_energies = []
+        D_alpha = []    
+        D_alphaEn = []
+
 
     states = [state]
     
@@ -65,50 +69,48 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
         print "Using Matrix Diagonalization"
         stateleft = []
         stateright = []
+        alpha =  Udag.dot( Obs_0 ).dot(U) 
+        alphaEn =  Udag.dot( HPrethermal ).dot(U)
 
-        D_stateleft = []
-        D_stateright = []
-        
+        ZZ0 = []
+        Z0 = []
+        en0 = []
+
         for state in states:
             stateleft.append( np.conj(Udag.dot(state)))
             stateright.append( Udag.dot(Obs_0).dot(state).T )
 
-            D_stateleft.append( np.conj(D_Udag.dot(state)))
-            D_stateright.append( D_Udag.dot(Obs_0).dot(state).T )
-            
-
-        alpha =  Udag.dot( Obs_0 ).dot(U) 
-        D_alpha = D_Udag.dot( Obs_0 ).dot(D_U)
-
-        alphaEn =  Udag.dot( HPrethermal ).dot(U)
-        D_alphaEn = D_Udag.dot( HPrethermal ).dot(D_U)
-        
-        ZZ0 = []
-        D_ZZ0 = []
         for k in range(len(states)):
             ZZ0.append( (stateleft[k].dot(alpha).dot( stateright[k] ) ) [0,0] )
-            D_ZZ0.append( (D_stateleft[k].dot(D_alpha).dot( D_stateright[k] ) ) [0,0] )
-
-        valuesZZ.append(ZZ0)
-        D_valuesZZ.append(D_ZZ0)
-
-        Z0 = []
-        D_Z0 = []
-        for k in range(len(states)):
             Z0.append( (stateleft[k].dot(alpha).dot( np.conj(stateleft[k].T)) ) )
-            D_Z0.append( (D_stateleft[k].dot(D_alpha).dot( np.conj(D_stateleft[k].T)) ) )
-            
-        valuesZ.append(Z0)
-        D_valuesZ.append(D_Z0)
-
-        en0 = []
-        D_en0 = []
-        for k in range(len(states)):
             en0.append( (stateleft[k].dot(alphaEn).dot( np.conj(stateleft[k].T)) ) [0,0] )
-            D_en0.append( (D_stateleft[k].dot(D_alphaEn).dot( np.conj(D_stateleft[k].T)) ) )
             
+        valuesZZ.append(ZZ0)
+        valuesZ.append(Z0)
         energies.append(en0)
-        D_energies.append(D_en0)
+
+        if Compute_D:
+            D_stateleft = []
+            D_stateright = []
+            D_alpha = D_Udag.dot( Obs_0 ).dot(D_U)
+            D_alphaEn = D_Udag.dot( HPrethermal ).dot(D_U)
+
+            D_ZZ0 = []
+            D_Z0 = []
+            D_en0 = []
+
+            for state in states:
+                D_stateleft.append( np.conj(D_Udag.dot(state)))
+                D_stateright.append( D_Udag.dot(Obs_0).dot(state).T )
+
+            for k in range(len(states)):
+                D_ZZ0.append( (D_stateleft[k].dot(D_alpha).dot( D_stateright[k] ) ) [0,0] )
+                D_Z0.append( (D_stateleft[k].dot(D_alpha).dot( np.conj(D_stateleft[k].T)) ) )
+                D_en0.append( (D_stateleft[k].dot(D_alphaEn).dot( np.conj(D_stateleft[k].T)) ) )
+
+            D_valuesZZ.append(D_ZZ0)
+            D_valuesZ.append(D_Z0)
+            D_energies.append(D_en0)
 
     else:
         print "NO LONGER SUPPOERTED"
@@ -165,29 +167,30 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                 )[0,0] )
             energies.append(ent)
 
-            D_obst = []
-            for k in range(len( states)):
-                D_obst.append( (
-                    np.multiply(D_stateleft[k] ,np.conj(D_Diag)).dot( D_alpha ).dot(
-                        np.multiply( D_stateright[k].T, D_Diag).T)
-                )[0,0] )
-            D_valuesZZ.append(D_obst)
+            if Compute_D:
+                D_obst = []
+                for k in range(len( states)):
+                    D_obst.append( (
+                        np.multiply(D_stateleft[k] ,np.conj(D_Diag)).dot( D_alpha ).dot(
+                            np.multiply( D_stateright[k].T, D_Diag).T)
+                    )[0,0] )
+                D_valuesZZ.append(D_obst)
 
-            D_Zt = []
-            for k in range(len(states)):
-                D_Zt.append( (
-                    np.multiply(stateleft[k] , np.conj(D_Diag)).dot( D_alpha ).dot(
-                        np.multiply( np.conj(stateleft[k]), D_Diag).T)
-                )[0,0] )
-            D_valuesZ.append(D_Zt)
-            
-            D_ent = []
-            for k in range(len(states)):
-                D_ent.append( (
-                    np.multiply(D_stateleft[k] , np.conj(D_Diag)).dot( D_alphaEn ).dot(
-                        np.multiply( np.conj(D_stateleft[k]), D_Diag).T)
-                ))#[0,0] )
-            D_energies.append(D_ent)
+                D_Zt = []
+                for k in range(len(states)):
+                    D_Zt.append( (
+                        np.multiply(stateleft[k] , np.conj(D_Diag)).dot( D_alpha ).dot(
+                            np.multiply( np.conj(stateleft[k]), D_Diag).T)
+                    )[0,0] )
+                D_valuesZ.append(D_Zt)
+
+                D_ent = []
+                for k in range(len(states)):
+                    D_ent.append( (
+                        np.multiply(D_stateleft[k] , np.conj(D_Diag)).dot( D_alphaEn ).dot(
+                            np.multiply( np.conj(D_stateleft[k]), D_Diag).T)
+                    ))#[0,0] )
+                D_energies.append(D_ent)
                 
         else:
             print "NO LONGER SUPPORTED"
@@ -268,8 +271,9 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                     w = w * w
                     w = w / np.abs(w)
 
-                    D_w = D_w * D_w
-                    D_w = D_w / np.abs(D_w)
+                    if Compute_D:
+                        D_w = D_w * D_w
+                        D_w = D_w / np.abs(D_w)
                 else:
                     FloquetEvo = FloquetEvo.dot(FloquetEvo)
 
@@ -277,8 +281,9 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                 Diag = Diag * w
                 Diag = Diag/np.abs(Diag)
 
-                D_Diag = D_Diag * D_w
-                D_Diag = D_Diag/np.abs(D_Diag)
+                if Compute_D:
+                    D_Diag = D_Diag * D_w
+                    D_Diag = D_Diag/np.abs(D_Diag)
                     
         else:
             times.append(times[-1] + MAX_COUNTER)
@@ -291,21 +296,13 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
 
     
     valuesZZ = np.array(valuesZZ)
-    D_valuesZZ = np.array( D_valuesZZ )
-
-
-
-    #print values[i]
     valuesZ = np.array(valuesZ)
-    #print valuesZ[i-NZZ]
-    D_valuesZ = np.array( D_valuesZ )
-
-
     energies = np.array( energies)
-#    print "EN", energies
-    D_energies = np.array(D_energies)
-#    print "DEN", D_energies
-    #print D_values
+
+    if Compute_D:
+        D_valuesZZ = np.array( D_valuesZZ )
+        D_valuesZ = np.array( D_valuesZ )
+        D_energies = np.array(D_energies)
     
     if  np.max(np.abs( np.imag( energies) ) )> 1e-14:
         print "TOO MUCH IMAGINARY PART"
@@ -322,20 +319,25 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
             'preComputation_fil': preComputation_fil,
             'evolution': evolution,
             'logEvo': logEvo,
-            'InfTemp': InfTemp,
+            #'InfTemp': InfTemp,
             'SVD_Cutoff': SVD_Cutoff,
-            'EigHPrethermal': eigHPrethermal,
+            #'EigHPrethermal': eigHPrethermal,
             'EigFloquet': w}
             
     output = {'valuesZ': valuesZ,
               'valuesZZ': valuesZZ,
               'energies': energies,
-              'D_valuesZ': D_valuesZ,
-              'D_valuesZZ': D_valuesZZ,
-              'D_energies': D_energies,              
+              # 'D_valuesZ': D_valuesZ,
+              # 'D_valuesZZ': D_valuesZZ,
+              # 'D_energies': D_energies,              
               'times': times,
               'info': info,
               }
+
+    if Compute_D:
+        output['D_valuesZ'] = D_valuesZ
+        output['D_valuesZZ'] = D_valuesZZ
+        output['D_energies'] = D_energies
 
     print ""
     print result_fil + ".npy"
