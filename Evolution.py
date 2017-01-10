@@ -29,7 +29,7 @@ changed_Omega = False
 for i in range(1, len(sys.argv), 2):
     if sys.argv[i] in args.keys():
         if sys.argv[i] == 'state':
-            print "ASD"
+            print( "ASD")
             changed_state = True
         if sys.argv[i] == 'Omega':
             changed_Omega = True
@@ -41,7 +41,7 @@ for i in range(1, len(sys.argv), 2):
 if not changed_state:
     args['state'] = 2**args['L'] - 1
     
-print args
+print( args)
 
 L = int(args['L'])
 Omega = float(args['Omega'])
@@ -140,14 +140,14 @@ fil = fil + "Cutoff_%.8f"%SVD_Cutoff + 'ExpEig_LessObs'
 Floquet[Choice][1]['fil'] =  fil
 Floquet[Choice][1]['dir'] = args['-o']
 
-print "Filename: ",fil
+print( "Filename: ",fil)
 
 info = 0
 
 states, precomp_fil = Floquet[Choice][0]( Floquet[Choice][1])
 
 #for k, state in enumerate(states):
-#    print "Computing Evolution for state: ", state
+#    print( "Computing Evolution for state: ", state)
 #    Compute_Evolution(Nsteps,
 #                      state,
 #                      result_fil = fil + "_State%d"%(k),

@@ -42,11 +42,11 @@ if not (args['stateDesc'] == "X"):
     for i in range(L):
         if args['stateDesc'][i] == 'D':
             StateNum += 2**i
-            print StateNum
+            print( StateNum)
 
 else:
     args['stateDesc']= ""
-    for i in range():
+    for i in range(L):
         if StateNum % 2**i == 0:
             args['stateDesc'] += "U"
         else:
@@ -58,10 +58,10 @@ fil = preComputation_Fil + "_State%s"%(args['stateDesc']) + ('_Log%d_Nsteps%s_MA
 
 (temp, fil) = os.path.split(fil)
 state[StateNum] = 1
-print "Computing Evolution for state: ", state
-print args['stateDesc']
-print "Saving it as:"
-print output_folder + fil
+print( "Computing Evolution for state: ", state)
+print( args['stateDesc'])
+print( "Saving it as:")
+print( output_folder + fil)
 
 
 

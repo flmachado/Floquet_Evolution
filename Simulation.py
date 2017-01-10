@@ -18,7 +18,7 @@ from random import *
 #     hsize = nstates**2
 #     wsp = np.empty(lwsp)
 #     i = dgpadm(ideg, t, h, wsp, ipiv)[0]-1
-#     print 'i =', i
+#     print( 'i =', i)
 #     p = wsp[i:i+hsize].reshape(h.shape)
 #     return p.T
 
@@ -44,17 +44,17 @@ def EigenValueError(mat, err):
 def EigenVectorsUnitary(mat):
 
     (w_real, v) = np.linalg.eigh( (mat + np.conj(mat).T)/2)
-    print "Unitary Eigenvectors"
-    print np.shape(v)
-    print np.shape(mat)
+    print( "Unitary Eigenvectors")
+    print( np.shape(v))
+    print( np.shape(mat))
     
     Eig = np.conj(v.T).dot( mat ).dot( v )   
-    #print Eig
-    #print Eig
-    #print Eig.shape
-    #print np.max(np.abs( Eig - np.diag(np.diag(Eig)) ) )
-    #print w
-    #print np.linalg.eigvals(mat)
+    #print( Eig)
+    #print( Eig)
+    #print( Eig.shape)
+    #print( np.max(np.abs( Eig - np.diag(np.diag(Eig)) ) ))
+    #print( w)
+    #print( np.linalg.eigvals(mat))
     return (np.diag(Eig), v)
 
 def Eigenvalues(Floquet):
@@ -65,7 +65,7 @@ def Eigenvalues(Floquet):
 
 
 def Generate_Floquet_Operator(L,T,W,epsilon,eta):
-    print "\nUSING THE FLOQUET_OPERATOR FUNCTION\n"
+    print( "\nUSING THE FLOQUET_OPERATOR FUNCTION\n")
     # Hamniltonia
     ########## First Half of evolution
     # Precession term:
@@ -118,22 +118,22 @@ def Generate_Floquet_Operator(L,T,W,epsilon,eta):
     res = True
     test = np.allclose( np.conj(v).T.dot(v) ,  np.eye(2**L))
     res = res and test
-    print "Unitary: ", test
+    print( "Unitary: ", test)
     test = np.allclose(v.dot( np.diag(w).dot( np.conj(v).T)) , np.dot(Uf2, Uf1))
     res = res and test
-    print "Decomp: ", test
+    print( "Decomp: ", test)
     test = np.allclose(v.dot( np.diag(w**2).dot( np.conj(v).T)) , np.dot(Uf2, Uf1).dot(Uf2.dot(Uf1)) )
     res = res and test
-    print "Decomp2: ", test
+    print( "Decomp2: ", test)
     test = np.allclose(v.dot( np.diag(w**3).dot( np.conj(v).T)) , np.dot(Uf2, Uf1).dot(Uf2.dot(Uf1)).dot(Uf2.dot(Uf1)) )
     res = res and test
-    print "Decomp3: ", test
+    print( "Decomp3: ", test)
     
     return (v, w, np.conj(v).T, np.dot(Uf2, Uf1) , res)
     
 
 def Generate_Floquet_NearestNeighbour(args):
-    print "\nUSING THE NEAREST NEIGHBOUR FUNCTION\n"
+    print( "\nUSING THE NEAREST NEIGHBOUR FUNCTION\n")
     # Hamniltonia
     ########## First Half of evolution
     # Precession term:
@@ -219,7 +219,7 @@ def Generate_Floquet_NearestNeighbour(args):
     
 
 def Generate_Chetans_Prethermal(L,T2,J,epsilon,hz, hy, hx):
-    print "\nUSING CHETAN's FUNCTION\n"
+    print( "\nUSING CHETAN's FUNCTION\n")
     # Hamniltonia
     ########## First Half of evolution
     # Precession term:
@@ -287,12 +287,12 @@ def Generate_Chetans_Prethermal(L,T2,J,epsilon,hz, hy, hx):
     ##########
 
     #(U, s, V) = np.linalg.svd( np.dot(Uf2, Uf1))
-    #print "SVD: ", np.allclose( U.dot(np.diag(s).dot( V) ) , np.dot(Uf2, Uf1) ) 
+    #print( "SVD: ", np.allclose( U.dot(np.diag(s).dot( V) ) , np.dot(Uf2, Uf1) ) )
 
-    #print s
-    #print w
+    #print( s)
+    #print( w)
 
-    #print "SVD: ", np.allclose( U.dot(np.diag(w).dot( V_prime) ) , np.dot(Uf2, Uf1) ) 
+    #print( "SVD: ", np.allclose( U.dot(np.diag(w).dot( V_prime) ) , np.dot(Uf2, Uf1) ) )
     
     return (v, w, np.conj(v).T, np.dot(Uf2, Uf1), res)
 
@@ -312,40 +312,40 @@ def Generate_Long_Range_Floquet( args):
     fil = args['fil']
 
     output_fil = fil + 'OUT.out'
-    out = open(output_fil, 'w')
-    out.close()
-    out = open(output_fil, 'a')
+    #out = open(output_fil, 'w')
+    #out.close()
+    #out = open(output_fil, 'a')
     
-    print "\nLong_Range Floquet Function\n"
-    out.write("\nLong_Range Floquet Function: %s\n" % (time.localtime(time.time()) )  )
+    print( "\nLong_Range Floquet Function\n")
+    #out.write("\nLong_Range Floquet Function: %s\n" % (time.localtime(time.time()) )  )
     
     # Hamiltonian
     ########## First Half of evolution
     # Precession term:
 
-    print "Generate ZPrecession"
-    out.write("Generate ZPrecession: %s\n" % (time.localtime(time.time() ) ) )
+    print( "Generate ZPrecession")
+    #out.write("Generate ZPrecession: %s\n" % (time.localtime(time.time() ) ) )
     Zprecession = np.zeros( (2**L, 2**L), dtype = 'complex64')
     for i in range(L):
         Zprecession += SigmaTerms(sigmaz, L, [i])
 
-    #print "Zprecession"
-    #print np.diag(Zprecession)
+    #print( "Zprecession")
+    #print( np.diag(Zprecession))
 
-    print "Generate XPrecession"
-    out.write("Generate XPrecession: %s\n" % (time.localtime(time.time() ) ) )
+    print( "Generate XPrecession")
+    #out.write("Generate XPrecession: %s\n" % (time.localtime(time.time() ) ) )
     Xprecession = np.zeros( (2**L, 2**L), dtype = 'complex64')
     for i in range(L):
         Xprecession += SigmaTerms(sigmax, L, [i])
         
-    print "Generate YPrecession"
-    out.write("Generate YPrecession: %s\n" % (time.localtime(time.time() ) ) )
+    print( "Generate YPrecession")
+    #out.write("Generate YPrecession: %s\n" % (time.localtime(time.time() ) ) )
     Yprecession = np.zeros( (2**L, 2**L), dtype = 'complex64')
     for i in range(L):
         Yprecession += SigmaTerms(sigmay, L, [i])
 
-    print "Generate XXPrecession"
-    out.write("Generate XXPrecession: %s\n" % (time.localtime(time.time() ) ) )
+    print( "Generate XXPrecession")
+    #out.write("Generate XXPrecession: %s\n" % (time.localtime(time.time() ) ) )
     XXprec = np.zeros((2**L, 2**L), dtype = 'complex64')
     # NO CYCLIC CONDITION
     for i in range(L-1):
@@ -360,13 +360,13 @@ def Generate_Long_Range_Floquet( args):
     #     interactions += SigmaTerms(sigmaz, L, [i,j]) * J 
 
     # CONSIDER LONG RANGE INTERACTION - No Cyclic conditions
-    print "Generate Interactions"
-    out.write("Generate Interactions: %s\n" % (time.localtime(time.time()) ) )
+    print( "Generate Interactions")
+    #out.write("Generate Interactions: %s\n" % (time.localtime(time.time()) ) )
     interactions = np.zeros((2**L, 2**L), dtype = 'complex64')
     for i in range(L-1):
         for j in range(i+1, L):
             interactions += SigmaTerms(sigmaz, L, [i,j]) * J * 1/(j-i)**alpha #Ewald(L, j-i, alpha)
-            #print Ewald(L, j-i, alpha)
+            #print( Ewald(L, j-i, alpha))
     ########## Second Half of evolutions
 
     H2 = np.pi/2 * (1+epsilon) * Xprecession # Reuse calculation of sum sigma_x
@@ -378,9 +378,9 @@ def Generate_Long_Range_Floquet( args):
     
         
     H1 = interactions + hz*Zprecession + hx*Xprecession + hy*Yprecession + Jx * XXprec
-    #print H1
-    print "Compute Uf1"
-    out.write("Compute Uf1: %s\n" % (time.localtime(time.time()) ) )
+    #print( H1)
+    print( "Compute Uf1")
+    #out.write("Compute Uf1: %s\n" % (time.localtime(time.time()) ) )
 
     #Uf1_dexpm = dexpm(- 1j*T* H1, 1)
     #Uf1_expm = slinalg.expm(- 1j*T* H1)
@@ -390,27 +390,27 @@ def Generate_Long_Range_Floquet( args):
     (w,v) = slinalg.eigh(H1)
     Uf1 = v.dot(np.diag( np.exp(-1j * T * w) ) ).dot(np.conj(v).T)
     
-    #print "Difference"
-    #print "Diff my diag vs exmp2: ",  np.max(np.abs(Uf1_expm2 - Uf1))
-    #print "Same: ", np.allclose(Uf1_, Uf1)
+    #print( "Difference")
+    #print( "Diff my diag vs exmp2: ",  np.max(np.abs(Uf1_expm2 - Uf1)))
+    #print( "Same: ", np.allclose(Uf1_, Uf1))
 
     #(w_uf1, v_uf1) = slinalg.eig(Uf1)
     #(w_Mine, v_mine) = EigenVectorsUnitary(Uf1)
-    #print np.max(np.abs(np.conj(v).T.dot(v[:,0])[1:]))
-    #print np.max(np.abs(np.conj(v_uf1).T.dot(v_uf1[:,0])[1:]))
-    #print np.max(np.abs(np.conj(v_mine).T.dot(v_mine[:,0])[1:]))
-    #print np.abs(np.linalg.eigvals( Uf1) )
-    #print np.abs(np.linalg.eigvals( Uf1_expm2) )
-    #print "Diff expm2 vs dexpm: ", np.max(np.abs(Uf1_dexpm - Uf1))
+    #print( np.max(np.abs(np.conj(v).T.dot(v[:,0])[1:])))
+    #print( np.max(np.abs(np.conj(v_uf1).T.dot(v_uf1[:,0])[1:])))
+    #print( np.max(np.abs(np.conj(v_mine).T.dot(v_mine[:,0])[1:])))
+    #print( np.abs(np.linalg.eigvals( Uf1) ))
+    #print( np.abs(np.linalg.eigvals( Uf1_expm2) ))
+    #print( "Diff expm2 vs dexpm: ", np.max(np.abs(Uf1_dexpm - Uf1)))
 
-    #print "Differences between Methods"
-    #print "dexpm: ", np.max(np.abs( Uf1__ - Uf1))
-    #print "expm:  ", np.max(np.abs( Uf1__ - Uf1_))
+    #print( "Differences between Methods")
+    #print( "dexpm: ", np.max(np.abs( Uf1__ - Uf1)))
+    #print( "expm:  ", np.max(np.abs( Uf1__ - Uf1_)))
    
     HPrethermal = (interactions + hx*Xprecession + Jx * XXprec)/L
   
-    print "Compute Eigenvalues of HPrethermal"
-    out.write("Compute Eigenvalues of HPrethermal: %s\n" % (time.localtime(time.time()) ) )
+    print( "Compute Eigenvalues of HPrethermal")
+    #out.write("Compute Eigenvalues of HPrethermal: %s\n" % (time.localtime(time.time()) ) )
     (w,v) = np.linalg.eigh(HPrethermal)
 
     eigHPrethermal = w
@@ -419,8 +419,8 @@ def Generate_Long_Range_Floquet( args):
     HPrethermalEigenVectors = v
     groundstate = np.argmin(w)
     
-    print "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w)
-    out.write("Range of HPrethermal Hamiltonian: %.3f   ---   %.3f     : %s\n" % ( np.min(w), np.max(w), time.localtime(time.time()) ) ) 
+    print( "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w))
+    #out.write("Range of HPrethermal Hamiltonian: %.3f   ---   %.3f     : %s\n" % ( np.min(w), np.max(w), time.localtime(time.time()) ) ) 
     states = []
     states.append(v[:,groundstate])
 
@@ -429,7 +429,7 @@ def Generate_Long_Range_Floquet( args):
     Nstates = 20
     
     # for i in range(1,Nstates):
-    #     #print i
+    #     #print( i)
     #     for o in range(2**L):
     #         if abs(w[o]- np.min(w) - rang * float(i)/Nstates) < delta:
     #             states.append(v[:, o] )
@@ -456,12 +456,12 @@ def Generate_Long_Range_Floquet( args):
         states.append(temp)
 
         
-    #print "Computing HPrethermal Eigenvalues"
+    #print( "Computing HPrethermal Eigenvalues")
     #eigHprethermal = np.linalg.eigvalsh( HPrethermal )
 
     #(w_t,v_t) = np.linalg.eig(Floquet)
-    print "Computing Floquet Eigenvalues"
-    out.write("Computing Floquet Eigenvalues: %s\n" % (time.localtime(time.time()) ) )
+    print( "Computing Floquet Eigenvalues")
+    #out.write("Computing Floquet Eigenvalues: %s\n" % (time.localtime(time.time()) ) )
     Floquet = Uf2.dot(Uf1)
     
     #w_test = slinalg.eigvals(Floquet)
@@ -475,55 +475,55 @@ def Generate_Long_Range_Floquet( args):
 
     # for i in range(2**L):
     #     if np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i]) > 2e-6:
-    #         print np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i])
-    #         print "PROBLEM"
+    #         print( np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i]))
+    #         print( "PROBLEM")
     # for i in range(2**L):
     #     for o in range(2**L):
     #         if i==o: continue
     #         else:
     #             if np.abs(np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) ) > 1e-6:
-    #                 print np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) 
-    #                 print "prob"
+    #                 print( np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) )
+    #                 print( "prob")
 
     #plt.imshow(np.log( np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L) ) )
-    #print np.max(np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L))
+    #print( np.max(np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L)))
     #plt.show()
     #wa = np.angle(w)
     #wa.sort()
     #wa_ = np.angle(w_test)
     #wa_.sort()
 
-    #print wa
-    #print "Major Difference: ", np.max(np.abs(wa-wa_))
+    #print( wa)
+    #print( "Major Difference: ", np.max(np.abs(wa-wa_)))
        
-    #print "Testing Decomposition"
-    out.write("Testing Decomposition: %s\n" % (time.localtime(time.time()) ) )
+    #print( "Testing Decomposition")
+    #out.write("Testing Decomposition: %s\n" % (time.localtime(time.time()) ) )
     res = True
     test1 = np.allclose( Udag.dot(U) ,  np.eye(2**L))
     test2 = np.allclose( U.dot(Udag), np.eye(2**L) )
-    print test1, test2                    
+    print( test1, test2                    )
     
     temp_big = np.max(np.abs( U.dot(np.diag(Diag) ).dot(Udag) - Floquet) )
-    print "Big Diff Floquet:", temp_big
-    out.write("Biggest Element difference: %.4f\n" % (temp_big ) )
-    #print "Big Diff Floquet:", np.max(np.abs( U.dot(np.diag(Diag**2) ).dot(Udag) - Floquet.dot(Floquet)) )
+    print( "Big Diff Floquet:", temp_big)
+    #out.write("Biggest Element difference: %.4f\n" % (temp_big ) )
+    #print( "Big Diff Floquet:", np.max(np.abs( U.dot(np.diag(Diag**2) ).dot(Udag) - Floquet.dot(Floquet)) ))
 
     #for n in range(5):
         #fig = plt.figure()
         #plt.imshow(np.abs( U.dot(np.diag(Diag**n) ).dot(Udag) - np.linalg.matrix_power(Floquet,n)) )
-    #    print "Big Diff Floquet:", np.sum(np.abs( U.dot(np.diag(Diag**n) ).dot(Udag) - np.linalg.matrix_power(Floquet, n)))
+    #    print( "Big Diff Floquet:", np.sum(np.abs( U.dot(np.diag(Diag**n) ).dot(Udag) - np.linalg.matrix_power(Floquet, n))))
     #plt.show()
     # test = np.allclose(U.dot(np.diag(Diag) ).dot(Udag) , Floquet)
-    # print "U Udag: ",test, " , ", np.max(np.abs(U.dot(np.diag(Diag) ).dot(Udag) - Floquet))
+    # print( "U Udag: ",test, " , ", np.max(np.abs(U.dot(np.diag(Diag) ).dot(Udag) - Floquet)))
     # for i in range(50):
-    #     print np.max(np.abs(U.dot(np.diag(Diag**i) ).dot(Udag) - np.linalg.matrix_power(Floquet, i))), np.sum(np.abs(U.dot(np.diag(Diag**i) ).dot(Udag) - np.linalg.matrix_power(Floquet, i)))
+    #     print( np.max(np.abs(U.dot(np.diag(Diag**i) ).dot(Udag) - np.linalg.matrix_power(Floquet, i))), np.sum(np.abs(U.dot(np.diag(Diag**i) ).dot(Udag) - np.linalg.matrix_power(Floquet, i))))
 
     #res = res and test and test1
-    #print "Diagonalizable: ", res
+    #print( "Diagonalizable: ", res)
 
     #Obs_0 = []
 
-    #print SigmaTerms(sigmaz, L, [0])
+    #print( SigmaTerms(sigmaz, L, [0]))
     #Obs_0.append( SigmaTerms(sigmaz, L, [0]) )
     #Obs_0.append( SigmaTerms(sigmaz, L, [L/4]) )
     #Obs_0.append( SigmaTerms(sigmaz, L, [L/2]) )
@@ -556,11 +556,11 @@ def Generate_Long_Range_Floquet( args):
     }
 
     np.save(args['dir'] + 'PreComp_'+fil, preComputation)
-    print "Finished Precomputation"
-    print "Saved to:"
-    print 'PreComp_'+fil+'.npy'
-    out.write("Saved to: " + "PreComp_"+fil+".npy\n\n" )
-    out.write("Finished: %s\n" % (time.localtime(time.time()) ) )
+    print( "Finished Precomputation")
+    print( "Saved to:")
+    print( 'PreComp_'+fil+'.npy')
+    #out.write("Saved to: " + "PreComp_"+fil+".npy\n\n" )
+    #out.write("Finished: %s\n" % (time.localtime(time.time()) ) )
         
     return (states, 'PreComp_'+fil+'.npy')
 
@@ -580,7 +580,7 @@ def Generate_Francisco( args):
     fil = args['fil']
 
     
-    print "\n Francisco\n"
+    print( "\n Francisco\n")
     # Hamiltonian
     ########## First Half of evolution
     # Precession term:
@@ -589,8 +589,8 @@ def Generate_Francisco( args):
     for i in range(L):
         StaggeredZprecession += SigmaTerms(sigmaz, L, [i]) * (-1)**(i+1)
 
-    #print StaggeredZprecession
-    #print ""    
+    #print( StaggeredZprecession)
+    #print( ""    )
         
     XXprec = np.zeros((2**L, 2**L), dtype = 'complex64')
     for i in range(L-1):
@@ -602,28 +602,28 @@ def Generate_Francisco( args):
         j = (i+1)
         YYprec += SigmaTerms(sigmay, L, [i,j])
 
-    #print XXprec + YYprec
-    #print ""
+    #print( XXprec + YYprec)
+    #print( "")
         
     ZZprec = np.zeros((2**L, 2**L), dtype = 'complex64')
     for i in range(L-1):
         j = (i+1)
         ZZprec += SigmaTerms(sigmaz, L, [i,j])
 
-    #print ZZprec
-    #print ""    
+    #print( ZZprec)
+    #print( ""    )
     LinearTerm = np.zeros((2**L, 2**L), dtype = 'complex64')
     for i in range(L):       
         LinearTerm += SigmaTerms(sigmaz, L, [i]) *(i+1)
-    #print LinearTerm
-    #print ""
+    #print( LinearTerm)
+    #print( "")
 
     H1 = -(J/2)*(XXprec + YYprec) + (U/4) * ZZprec - (Omega-A)/4 * StaggeredZprecession - (dA/2) * LinearTerm
     H2 = -(J/2)*(XXprec + YYprec) + (U/4) * ZZprec - (Omega+A)/4 * StaggeredZprecession + (dA/2) * LinearTerm
 
-    print "H1"
-    #print H1
-    #print ""
+    print( "H1")
+    #print( H1)
+    #print( "")
 
     #plt.imshow( np.abs(H1) > 1e-10)
     #plt.show()
@@ -640,14 +640,14 @@ def Generate_Francisco( args):
         if counter == L/2:
             st.append(temp)
 
-    print st
+    print( st)
         
     
-    print "ST: ",  len(st)
+    print( "ST: ",  len(st))
     for i in st:
         for o in range(2**L):
             if np.abs(H1[i][o]) > 1e-10 and ( not o in st):
-                print "PROBLEM", i,o
+                print( "PROBLEM", i,o)
     H1 = H1[st,:]
     H1 = H1[:, st]
 
@@ -663,10 +663,10 @@ def Generate_Francisco( args):
     def xi (x):
         return 2*x/ np.pi * np.cos( np.pi * x / 2 ) / (1-x**2)
 
-    print "##########\n"
-    print xi( (A-dA)/Omega)
-    print xi( (A+dA)/Omega)
-    print ""
+    print( "##########\n")
+    print( xi( (A-dA)/Omega))
+    print( xi( (A+dA)/Omega))
+    print( "")
     
     XXYYOdd = np.zeros((2**L, 2**L), dtype = 'complex64')
     XXYYEven = np.zeros((2**L, 2**L), dtype = 'complex64')
@@ -690,7 +690,7 @@ def Generate_Francisco( args):
     eigHPrethermal = w
     HPrethermalEigenVectors = v
     groundstate = np.argmin(w)
-    print "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w)
+    print( "Range of HPrethermal Hamiltonian: ", np.min(w), np.max(w))
     states = []
     states.append(v[:,groundstate])
 
@@ -703,7 +703,7 @@ def Generate_Francisco( args):
         states.append(v[:, k] )
         
             
-    #print len(states)
+    #print( len(states))
     
 
     (w, v) = EigenVectorsUnitary( Floquet )
@@ -716,42 +716,42 @@ def Generate_Francisco( args):
 
     # for i in range(2**L):
     #     if np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i]) > 2e-6:
-    #         print np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i])
-    #         print "PROBLEM"
+    #         print( np.abs(np.conj(v[:,i]).T.dot(Floquet).dot(v[:,i]) - w[i]))
+    #         print( "PROBLEM")
     # for i in range(2**L):
     #     for o in range(2**L):
     #         if i==o: continue
     #         else:
     #             if np.abs(np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) ) > 1e-6:
-    #                 print np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) 
-    #                 print "prob"
+    #                 print( np.conj(v[:,o]).T.dot(Floquet).dot(v[:,i]) )
+    #                 print( "prob")
 
     #plt.imshow(np.log( np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L) ) )
-    #print np.max(np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L))
+    #print( np.max(np.abs(Udag.dot(Floquet).dot(U)) - np.eye(2**L)))
     #plt.show()
     #wa = np.angle(w)
     #wa.sort()
     #wa_ = np.angle(w_test)
     #wa_.sort()
 
-    #print wa
-    #print "Major Difference: ", np.max(np.abs(wa-wa_))
+    #print( wa)
+    #print( "Major Difference: ", np.max(np.abs(wa-wa_)))
        
-    #print "Testing Decomposition"
+    #print( "Testing Decomposition")
 
     res = True
     #fig = plt.figure()
     #plt.imshow( np.real(Udag.dot(U) - np.eye(np.shape(Floquet)[0])))
     #fig2 = plt.figure()
     #plt.imshow( np.real(Udag.dot(U) - np.eye(np.shape(Floquet)[0])))
-    print np.max(np.abs(Udag.dot(U) - np.eye(np.shape(Floquet)[0])))
+    print( np.max(np.abs(Udag.dot(U) - np.eye(np.shape(Floquet)[0]))))
     #plt.show()
     test1 = np.allclose( Udag.dot(U) ,  np.eye(np.shape(Floquet)[0]))
     test2 = np.allclose( U.dot(Udag), np.eye(np.shape(Floquet)[0]) )
-    print test1, test2                    
+    print( test1, test2                    )
     
     temp_big = np.max(np.abs( U.dot(np.diag(Diag) ).dot(Udag) - Floquet) )
-    print "Big Diff Floquet:", temp_big
+    print( "Big Diff Floquet:", temp_big)
 
 
     Obs_0 = []
@@ -787,7 +787,7 @@ def Generate_Francisco( args):
 
     HPrethermalEvo = HPrethermalEigenVectors.dot(np.diag(np.exp(-1j * T * eigHPrethermal) )).dot( np.conj( HPrethermalEigenVectors).T)
 
-    print "ASDASD"
+    print( "ASDASD")
 
     preComputation = {'HPrethermal': HPrethermal,
                       'Floquet':     Floquet,
@@ -809,9 +809,9 @@ def Generate_Francisco( args):
                       }
 
     np.save(args['dir'] + 'PreComp_'+fil, preComputation)
-    print "Finished Precomputation"
-    print "Saved to:"
-    print 'PreComp_'+fil+'.npy'
+    print( "Finished Precomputation")
+    print( "Saved to:")
+    print( 'PreComp_'+fil+'.npy')
         
     return (states, 'PreComp_'+fil+'.npy')
 
@@ -825,15 +825,15 @@ def Compute_r(L, T, W, epsilon, eta, neighbour = False):
         
     quasi = Eigenvalues(Floquet)
     
-    #print "sort_quasi:\n", quasi
+    #print( "sort_quasi:\n", quasi)
     delta = quasi[1:] - quasi[:-1]
-    #print "Delta:\n", delta
+    #print( "Delta:\n", delta)
     
     r = []
     for i in range(len(delta)-1):
-        #print delta[i]
-        #print delta[i+1]
-        #print min( delta[i+1], delta[i]), max( delta[i+1], delta[i])
+        #print( delta[i])
+        #print( delta[i+1])
+        #print( min( delta[i+1], delta[i]), max( delta[i+1], delta[i]))
         if delta[i+1] == 0.0 and delta[i] ==0:
             continue
         r.append( min( delta[i+1], delta[i]) / max( delta[i+1], delta[i]))
@@ -841,7 +841,7 @@ def Compute_r(L, T, W, epsilon, eta, neighbour = False):
     r = np.array(r)
     
     
-    print "<r>: ", np.mean(r)
+    print( "<r>: ", np.mean(r))
 
     return np.mean(r)
     

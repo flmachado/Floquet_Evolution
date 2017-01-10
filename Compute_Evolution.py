@@ -23,11 +23,11 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     
     if not logEvo:
         Diag = Diag**(MAX_COUNTER)
-    print "MAX_COUNTER: ", MAX_COUNTER
+    print("MAX_COUNTER: ", MAX_COUNTER)
 
     
     if ObsVal == -1:
-        print "WRONG OBS _ Setting OBSVAL = 0"
+        print("WRONG OBS _ Setting OBSVAL = 0")
         ObsVal = 0
     
     Obs_0 = SigmaTerms(sigmaz, L, [ ObsVal ])
@@ -35,7 +35,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     HPrethermal = preComputation['HPrethermal']
         
     Obs_t       = Obs_0
-    print "Number of Obs_0: " , len(Obs_0)
+    print("Number of Obs_0: " , len(Obs_0))
     res         = preComputation['res']
 
     #InfTemp     = preComputation['InfTemp']
@@ -63,10 +63,10 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     NZ = NZZ
     NEn = 1
 
-    #print "Looking at state:", state
+    #print( "Looking at state:", state)
                       
     if res:
-        print "Using Matrix Diagonalization"
+        print( "Using Matrix Diagonalization")
         stateleft = []
         stateright = []
         alpha =  Udag.dot( Obs_0 ).dot(U) 
@@ -113,10 +113,10 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
             D_energies.append(D_en0)
 
     else:
-        print "NO LONGER SUPPOERTED"
+        print( "NO LONGER SUPPOERTED")
 
     # else:
-    #     print "Using power of matrix"
+    #     print( "Using power of matrix")
     #     for i in range(len(Obs_0)-1):
     #         obs0 = []
     #         for state in states:
@@ -193,7 +193,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                 D_energies.append(D_ent)
                 
         else:
-            print "NO LONGER SUPPORTED"
+            print( "NO LONGER SUPPORTED")
             # if i < len(Obs_0) - 1:
             #     obst = []
             #     prod = prod.dot(Obs_0[i]) 
@@ -208,7 +208,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
 
 
     while times[-1] < Nsteps:
-        #print times[-1]
+        #print( times[-1])
         # Evolve the different observables:
         if logEvo:
             if res == True:
@@ -216,22 +216,22 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                     
                                 
             else:
-                print "NO LONGER SUPPORTED"
+                print( "NO LONGER SUPPORTED")
                     # prod =  np.conj(FloquetEvo).T.dot(Obs_t[i]).dot( FloquetEvo)
                     # Obs_t[i] = prod
 
                     # if eigCounter == EIG_COUNTER:
-                    #     print "Checking Numerics"
-                    #     print times[-1]
+                    #     print( "Checking Numerics")
+                    #     print( times[-1])
                     #     Need_SVD = EigenValueError(FloquetEvo , SVD_Cutoff )
 
                     #     eigCounter = 0
                     #     #l = min(np.abs(np.linalg.eigvals( FloquetEvo) ) )
-                    #     #print l
+                    #     #print( l)
                     #     if Need_SVD: #l < 1 - SVD_Cutoff:
-                    #         #print "Lowest absolute eigenvalue", l
-                    #         print "Applying SVD procedure"
-                    #         print "Time: ", times[-1]
+                    #         #print( "Lowest absolute eigenvalue", l)
+                    #         print( "Applying SVD procedure")
+                    #         print( "Time: ", times[-1])
                     #         (U, s, V) = np.linalg.svd( FloquetEvo )
                     #         FloquetEvo = U.dot(V)
                     # else:
@@ -253,7 +253,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                     compute_Expectations()
                     
             else:
-                print "NO LONGER SUPPORTED"
+                print( "NO LONGER SUPPORTED")
                 # prod = np.conj(Floquet).T.dot(Obs_t[i]).dot(Floquet)
                 #     Obs_t[i] = prod
                 #     compute_Expectations(prod, i)
@@ -305,11 +305,11 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
         D_energies = np.array(D_energies)
     
     if  np.max(np.abs( np.imag( energies) ) )> 1e-14:
-        print "TOO MUCH IMAGINARY PART"
-        #print energies
-        print np.max(np.abs( np.imag( energies) ) )
+        print( "TOO MUCH IMAGINARY PART")
+        #print( energies)
+        print( np.max(np.abs( np.imag( energies) ) ))
 
-        #print stateDesc
+        #print( stateDesc)
     info = {'L': L,
             'args': preComputation['args'],
             'state': state,
@@ -339,9 +339,9 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
         output['D_valuesZZ'] = D_valuesZZ
         output['D_energies'] = D_energies
 
-    print ""
-    print result_fil + ".npy"
-    print output_folder + result_fil
+    print( "")
+    print( result_fil + ".npy")
+    print( output_folder + result_fil)
 
     #np.save("here", output)
     np.save(output_folder + result_fil, output)
