@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as slinalg
 import time
+import h5py
 
 from Helpful import *
 #from expokit import dmexpv, dgpadm
@@ -542,23 +543,43 @@ def Generate_Long_Range_Floquet( args):
         #'Udag':        Udag,
         'Diag':        Diag,
         #'Obs':         Obs_0,
-        'ErrorDiag':   temp_big,
-        'res':         res,
-        'L':           L,
+        'ErrorDiag':   temp_big * np.ones(1),
+        'res':         res * np.ones(1),
+        'L':           L * np.ones(1),
         #'InfTemp':     InfTemp,
-        'args':        args,
+        #'args':        args,
         'eigHPrethermal':          eigHPrethermal,
         #'HPrethermalEigenVectors': HPrethermalEigenVectors,
         #'D_U':         HPrethermalEigenVectors,
         #'D_Udag':      np.conj(HPrethermalEigenVectors).T,
         #'D_Diag':      np.exp(-1j * T * eigHPrethermal),
-        'states':      states[0]
+        #'states':      states[0]
     }
 
-    np.save(args['dir'] + 'PreComp_'+fil, preComputation)
+    h5_fil = args['dir'] + 'PreComp_'+fil + '.h5'
+    args['fil'] = h5_fil
+    
+    h5_output = h5py.File( h5_fil, 'w')
+    
+    for key in preComputation:
+        #print(key)
+        #print(preComputation[key])
+        h5_output.create_dataset( key, data=preComputation[key], compression=True)
+
+    for key in args:
+        h5_output.attrs[key] = args[key]
+        #h5_output.create_dataset( key, data=args[key], compression=True)
+
+    #for i in h5_output.keys():
+    #    print(i)
+    #for i in h5_output.attrs.keys():
+    #    print(i, h5_output.attrs.get(i))
+    h5_output.close()
+           
+    #np.save(args['dir'] + 'PreComp_'+fil, preComputation)
     print( "Finished Precomputation")
     print( "Saved to:")
-    print( 'PreComp_'+fil+'.npy')
+    print( h5_fil)
     #out.write("Saved to: " + "PreComp_"+fil+".npy\n\n" )
     #out.write("Finished: %s\n" % (time.localtime(time.time()) ) )
         

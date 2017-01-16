@@ -34,7 +34,10 @@ SVD_Cutoff = args['SVD_Cutoff']
 output_folder = args['-o']
 Obs_Val = int(args['Obs_Val'])
 
-L = np.load(preComputation_Fil)[()]['L']
+preComputation = h5py.File(preComputation_Fil, 'r')
+L = int(np.array(preComputation['L'])[0])
+preComputation.close()
+print(L)
 state = np.zeros(2**L, dtype='complex')
 
 if not (args['stateDesc'] == "X"):

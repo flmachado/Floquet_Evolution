@@ -2,23 +2,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as slinalg
 import time
+import h5py
 
 from Helpful import *
 
 def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = -1):
 
-    preComputation = np.load(preComputation_fil)[()]
-    L           = preComputation['L']
+    preComputation = h5py.File(preComputation_fil, 'r')  #np.load(preComputation_fil)[()]
+    
+    
+    L           = int(np.array(preComputation['L'])[0])
 
-    U           = preComputation['U']
+    U           = np.array(preComputation['U'])
     Udag        = np.conj(U).T
-    Diag        = preComputation['Diag']
+    Diag        = np.array(preComputation['Diag'])
 
     Compute_D = False
     if "D_U" in preComputation.keys():
-        D_U         = preComputation['D_U']
+        D_U         = np.array(preComputation['D_U'])
         D_Udag      = np.conj(D_U).T
-        D_Diag      = preComputation['D_Diag']
+        D_Diag      = np.array(preComputation['D_Diag'])
         Compute_D   = True
     
     if not logEvo:
@@ -32,12 +35,23 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     
     Obs_0 = SigmaTerms(sigmaz, L, [ ObsVal ])
     
-    HPrethermal = preComputation['HPrethermal']
+    HPrethermal = np.array(preComputation['HPrethermal'])
         
     Obs_t       = Obs_0
     print("Number of Obs_0: " , len(Obs_0))
-    res         = preComputation['res']
+    res         = np.array(preComputation['res'])[0]
 
+
+    args = {}
+    for key in preComputation.attrs:
+        args[key] = preComputation.attrs[key]
+
+    print args
+    
+    preComputation.close()
+    
+    print L
+    print res
     #InfTemp     = preComputation['InfTemp']
     #eigHPrethermal = preComputation['eigHPrethermal']
     
@@ -81,9 +95,9 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
             stateright.append( Udag.dot(Obs_0).dot(state).T )
 
         for k in range(len(states)):
-            ZZ0.append( (stateleft[k].dot(alpha).dot( stateright[k] ) ) [0,0] )
+            ZZ0.append( (stateleft[k].dot(alpha).dot( stateright[k] ) ) )
             Z0.append( (stateleft[k].dot(alpha).dot( np.conj(stateleft[k].T)) ) )
-            en0.append( (stateleft[k].dot(alphaEn).dot( np.conj(stateleft[k].T)) ) [0,0] )
+            en0.append( (stateleft[k].dot(alphaEn).dot( np.conj(stateleft[k].T)) )  )
             
         valuesZZ.append(ZZ0)
         valuesZ.append(Z0)
@@ -164,7 +178,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                 ent.append( (
                     np.multiply(stateleft[k] , np.conj(Diag)).dot( alphaEn ).dot(
                         np.multiply( np.conj(stateleft[k]), Diag).T)
-                )[0,0] )
+                ) )
             energies.append(ent)
 
             if Compute_D:
@@ -173,7 +187,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                     D_obst.append( (
                         np.multiply(D_stateleft[k] ,np.conj(D_Diag)).dot( D_alpha ).dot(
                             np.multiply( D_stateright[k].T, D_Diag).T)
-                    )[0,0] )
+                    ) )
                 D_valuesZZ.append(D_obst)
 
                 D_Zt = []
@@ -181,7 +195,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                     D_Zt.append( (
                         np.multiply(stateleft[k] , np.conj(D_Diag)).dot( D_alpha ).dot(
                             np.multiply( np.conj(stateleft[k]), D_Diag).T)
-                    )[0,0] )
+                    ) )
                 D_valuesZ.append(D_Zt)
 
                 D_ent = []
@@ -311,7 +325,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
 
         #print( stateDesc)
     info = {'L': L,
-            'args': preComputation['args'],
+            'args': args,
             'state': state,
             'stateDesc': stateDesc,
             'Nsteps': Nsteps,
@@ -332,7 +346,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
               # 'D_energies': D_energies,              
               'times': times,
               'info': info,
-              }
+    }
 
     if Compute_D:
         output['D_valuesZ'] = D_valuesZ
@@ -344,8 +358,15 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     print( output_folder + result_fil)
 
     #np.save("here", output)
+    #h5_output = h5py.File(output_folder + result_fil + '.h5', "w")
     np.save(output_folder + result_fil, output)
-    
+
+    # for key in info.keys():
+    #     h5_output.create_dataset( key, data=info[key], compression=True)
+    # for key in output.keys():
+    #     h5_output.create_dataset( key, data=output[key], compression=True)    
+    # h5_output.close()
+        
     return output
         
             
