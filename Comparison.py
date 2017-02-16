@@ -54,7 +54,7 @@ ED_params = {
 Generate_Long_Range_Floquet(ED_params)
 
 # Run ED simulation
-Nsteps = 100
+Nsteps = len(dataset['EE'].flatten()) -1
 
 stateNum = 0
 for i in range(int(params['L'])):
@@ -67,7 +67,7 @@ state[stateNum] = 1
 ED_Data = []
 
 
-for i in range(int(params['L'])):
+for i in [0]:#range(int(params['L'])):
     res_filename = ED_filename.split('.')[0] + "_Spin%d.npy"%(i)
     Compute_Evolution(
         Nsteps,
@@ -83,17 +83,17 @@ for i in range(int(params['L'])):
 
     spin_data = np.load(res_filename)[()]
 
-    ED_Data.append([spin_data['energies'], spin_data['valuesZ']])
+    ED_Data.append([spin_data['energies'], spin_data['valuesZ'], spin_data['entropy'] ])
     
 print np.shape(dataset['DeffL'].flatten())
 print np.shape((ED_Data[0][0]).flatten())
-print np.shape(dataset['DeffL'].flatten() - ED_Data[0][0].flatten())
+#print np.shape(dataset['DeffL'].flatten() - ED_Data[0][0].flatten())
     
 # Compare Data:
 fig, ax = plt.subplots()
 
 for i in range(len(ED_Data)):
-    dif = np.abs(dataset['DeffL'][:Nsteps+1].flatten()- ED_Data[i][0].flatten())
+    dif = np.abs(dataset['DeffL'].flatten()- ED_Data[i][0].flatten())
     plt.plot(dif, label = 'Energy File=%d'%i)
 plt.xlabel('Time')
 plt.ylabel('Energy Difference')
@@ -101,9 +101,17 @@ plt.legend()
 
 fig, ax = plt.subplots()
 for i in range(len(ED_Data)):
-    plt.plot(np.abs(dataset['Sz_%d'%i][:Nsteps+1].flatten()- ED_Data[i][1].flatten()), label = 'Spin %d'%i)
+    plt.plot(np.abs(dataset['Sz_%d'%i].flatten()- ED_Data[i][1].flatten()), label = 'Spin %d'%i)
 plt.xlabel('Time')
 plt.ylabel('Spin Expectation Difference')
+plt.legend()
+
+
+fig, ax = plt.subplots()
+for i in range(len(ED_Data)):
+    plt.plot(np.abs(dataset['EE'].flatten()- ED_Data[i][2].flatten()), label = 'Spin %d'%i)
+plt.xlabel('Time')
+plt.ylabel('Entanglement Entropy')
 plt.legend()
 plt.show()
 

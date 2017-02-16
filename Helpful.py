@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.linalg as linalg
 
 
 sigmax = np.array([[0,1],
@@ -39,3 +40,31 @@ def SigmaTerms(sigma, L, indices):
         else:
             mat = outer(iden, mat)
     return mat
+
+
+def Entropy(state, reduced, L):
+
+    rho_size = 2**(L-reduced)
+    red_size = 2**reduced
+
+    #print np.abs(state)
+    
+    rho = np.zeros( (rho_size, rho_size), dtype='complex' )
+    for i in range(rho_size):
+        for o in range(rho_size):
+            temp = 0
+            for k in range(red_size):
+                #print i,o,k
+                #print (o<<reduced) + k
+                temp +=  state[ (i << reduced) + k]*np.conj( state[(o<<reduced) + k] )
+            rho[i,o] = temp
+            
+    eigval =linalg.eigvalsh(rho)
+    ent = 0
+    for i in eigval:
+        ent -= i * np.log(i)
+        #print i, ent
+
+    return ent
+    
+    

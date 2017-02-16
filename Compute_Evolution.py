@@ -6,6 +6,10 @@ import h5py
 
 from Helpful import *
 
+
+
+
+
 def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, evolution='single',  logEvo = False, MAX_COUNTER = 1, EIG_COUNTER = 10, SVD_Cutoff = 1e-4, output_folder = './', ObsVal = -1):
 
     preComputation = h5py.File(preComputation_fil, 'r')  #np.load(preComputation_fil)[()]
@@ -59,6 +63,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     valuesZZ = []
     valuesZ = []
     energies = []
+    entropy = []
     alpha = []
     alphaEn = []
 
@@ -78,7 +83,9 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     NEn = 1
 
     #print( "Looking at state:", state)
-                      
+
+
+                          
     if res:
         print( "Using Matrix Diagonalization")
         stateleft = []
@@ -89,6 +96,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
         ZZ0 = []
         Z0 = []
         en0 = []
+        ent0= []
 
         for state in states:
             stateleft.append( np.conj(Udag.dot(state)))
@@ -98,10 +106,13 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
             ZZ0.append( (stateleft[k].dot(alpha).dot( stateright[k] ) ) )
             Z0.append( (stateleft[k].dot(alpha).dot( np.conj(stateleft[k].T)) ) )
             en0.append( (stateleft[k].dot(alphaEn).dot( np.conj(stateleft[k].T)) )  )
+
+            ent0.append( Entropy(np.conj(U.dot(stateleft[k]) ).T, L/2, L) )
             
         valuesZZ.append(ZZ0)
         valuesZ.append(Z0)
         energies.append(en0)
+        entropy.append(ent0)
 
         if Compute_D:
             D_stateleft = []
@@ -151,6 +162,8 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     eigCounter = 0
     dt = 1
 
+    
+
     def compute_Expectations():
         if res:
             obst = []
@@ -181,6 +194,13 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
                 ) )
             energies.append(ent)
 
+            entrop = []
+            for k in range(len(states)):
+                entrop.append(
+                    Entropy( U.dot(np.multiply( np.conj(stateleft[k]), Diag)).T, L/2, L)
+                )
+            entropy.append(entrop)
+            
             if Compute_D:
                 D_obst = []
                 for k in range(len( states)):
@@ -312,6 +332,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     valuesZZ = np.array(valuesZZ)
     valuesZ = np.array(valuesZ)
     energies = np.array( energies)
+    entropy = np.array(entropy)
 
     if Compute_D:
         D_valuesZZ = np.array( D_valuesZZ )
@@ -341,6 +362,7 @@ def Compute_Evolution(Nsteps, state, stateDesc, result_fil, preComputation_fil, 
     output = {'valuesZ': valuesZ,
               'valuesZZ': valuesZZ,
               'energies': energies,
+              'entropy': entropy,
               # 'D_valuesZ': D_valuesZ,
               # 'D_valuesZZ': D_valuesZZ,
               # 'D_energies': D_energies,              
